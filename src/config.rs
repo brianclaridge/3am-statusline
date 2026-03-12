@@ -134,7 +134,7 @@ pub fn load() -> Result<Option<StatuslineConfig>> {
     }
 }
 
-/// Search order: $STATUSLINE_CONFIG > .claude/statusline.yml > $CLAUDE_CONFIG_DIR/statusline.yml
+/// Search order: $STATUSLINE_CONFIG > config/statusline.yml > .claude/statusline.yml > $CLAUDE_CONFIG_DIR/statusline.yml
 fn find_config_path() -> Option<PathBuf> {
     let candidates = config_candidates();
     candidates.into_iter().find(|p| p.exists())
@@ -147,6 +147,7 @@ fn config_candidates() -> Vec<PathBuf> {
         paths.push(PathBuf::from(explicit));
     }
 
+    paths.push(PathBuf::from("config/statusline.yml"));
     paths.push(PathBuf::from(".claude/statusline.yml"));
 
     if let Ok(config_dir) = std::env::var("CLAUDE_CONFIG_DIR") {
@@ -289,7 +290,8 @@ lines:
         let _lock = ENV_LOCK.lock().unwrap();
         std::env::remove_var("STATUSLINE_CONFIG");
         let paths = config_candidates();
-        assert_eq!(paths[0], PathBuf::from(".claude/statusline.yml"));
+        assert_eq!(paths[0], PathBuf::from("config/statusline.yml"));
+        assert_eq!(paths[1], PathBuf::from(".claude/statusline.yml"));
     }
 
     #[test]
