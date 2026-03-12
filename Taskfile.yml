@@ -75,5 +75,5 @@ tasks:
       - git tag {{.TAG}}
       - git push origin {{.TAG}}
       - echo "Tag {{.TAG}} pushed — watching pipeline..."
-      - gh run watch --exit-status
+      - gh run watch $(gh run list --workflow=release.yml --limit=1 --json=databaseId --jq='.[0].databaseId') --exit-status
     silent: true
