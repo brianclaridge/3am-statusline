@@ -2,10 +2,29 @@
 # Copy to .claude/statusline.yml in your project root
 
 lines:
-  - left: "{model.display_name}"
-    right: "{cost.total_cost_usd|currency}"
-  - left: "{meter:context_window.used_percentage} {context_window.used_percentage|pct} ctx"
-    right: "{context_window.total_input_tokens|tokens} tok"
+  - left: ""
+  - left: ""
+  - left: "{c:dim}session:{/c} {c:session}{session_id}{/c}"
+    right: "{c:plan}{plan.slug}{/c}"
+  - left: "{c:model}{model.display_name}{/c}"
+    right: "{cost.total_cost_usd|currency|cost}"
+  - left: "{meter:context_window.used_percentage} {context_window.used_percentage|pct|value} ctx"
+    right: "{context_window.total_input_tokens|tokens|value} tok"
+  - left: "{meter:ratelimit.5h} {ratelimit.5h|pct|value} session"
+    right: "{c:dim}resets{/c} {ratelimit.5h_eta|dim}"
+  - left: "{meter:ratelimit.7d} {ratelimit.7d|pct|value} weekly"
+    right: "{c:dim}resets{/c} {ratelimit.7d_eta|dim}"
+  - left: "{context_window.total_output_tokens|tokens|value} out"
+    right: "{c:green}+{cost.total_lines_added|comma}{/c} {c:red}-{cost.total_lines_removed|comma}{/c} lines"
+  - left: ""
+
+theme:
+  model: "1"        # bold
+  cost: "32"        # green
+  value: "36"       # cyan
+  session: "2"      # dim
+  plan: "33"        # yellow
+  dim: "2"          # dim
 
 meter:
   width: 10
@@ -15,6 +34,10 @@ meter:
     green: 0
     yellow: 60
     red: 85
+
+logging:
+  dir: ".data/logs/statusline"
+  keep: 50
 
 # events:
 #   - name: branch

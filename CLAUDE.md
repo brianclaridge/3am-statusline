@@ -33,9 +33,10 @@ Five sections: `lines`, `meter`, `events`, `budget`, `logging`.
 
 ### Config search order
 
-1. `.claude/statusline.yml` (project-local)
-2. `$CLAUDE_CONFIG_DIR/statusline.yml` (per-user)
-3. Built-in default (hardcoded two-line layout)
+1. `$STATUSLINE_CONFIG` (explicit override via env var)
+2. `.claude/statusline.yml` (project-local)
+3. `$CLAUDE_CONFIG_DIR/statusline.yml` (per-user)
+4. Built-in default (hardcoded two-line layout)
 
 ### Template tokens
 

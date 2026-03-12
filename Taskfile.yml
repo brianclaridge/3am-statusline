@@ -28,8 +28,10 @@ tasks:
     deps:
       - update
     env:
+      COLORTERM: "truecolor"
       CLAUDE_CONFIG_DIR: ".data/claude-data"
       CLAUDE_CODE_TMPDIR: ".data/claude-tmp"
+      STATUSLINE_CONFIG: "config/statusline.yml"
     vars:
       ARGS: --chrome --ide --model opus
     cmds:
@@ -57,4 +59,21 @@ tasks:
     desc: Run unit tests
     cmds:
       - cargo test
+    silent: true
+
+  release:
+    desc: Tag and push to trigger the GitHub Actions release pipeline
+    vars:
+      TAG:
+        sh: 'date -u +%Y.%m.%d-$(git rev-parse --short HEAD)'
+    preconditions:
+      - sh: git diff --quiet && git diff --cached --quiet
+        msg: "Working tree is dirty — commit or stash changes first"
+      - sh: command -v gh
+        msg: "gh CLI is required — install from https://cli.github.com"
+    cmds:
+      - git tag {{.TAG}}
+      - git push origin {{.TAG}}
+      - echo "Tag {{.TAG}} pushed — watching pipeline..."
+      - gh run watch --exit-status
     silent: true

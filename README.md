@@ -54,7 +54,7 @@ meter:
 ### Template tokens
 
 | Syntax | Example | Output |
-|--------|---------|--------|
+| -------- | --------- | -------- |
 | `{field}` | `{model.display_name}` | `Opus 4.6` |
 | `{field\|format}` | `{cost.total_cost_usd\|currency}` | `$0.55` |
 | `{field\|color}` | `{model.display_name\|dim}` | dim text |

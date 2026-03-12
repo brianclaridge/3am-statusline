@@ -134,14 +134,20 @@ pub fn load() -> Result<Option<StatuslineConfig>> {
     }
 }
 
-/// Search order: .claude/statusline.yml > $CLAUDE_CONFIG_DIR/statusline.yml
+/// Search order: $STATUSLINE_CONFIG > .claude/statusline.yml > $CLAUDE_CONFIG_DIR/statusline.yml
 fn find_config_path() -> Option<PathBuf> {
     let candidates = config_candidates();
     candidates.into_iter().find(|p| p.exists())
 }
 
 fn config_candidates() -> Vec<PathBuf> {
-    let mut paths = vec![PathBuf::from(".claude/statusline.yml")];
+    let mut paths = vec![];
+
+    if let Ok(explicit) = std::env::var("STATUSLINE_CONFIG") {
+        paths.push(PathBuf::from(explicit));
+    }
+
+    paths.push(PathBuf::from(".claude/statusline.yml"));
 
     if let Ok(config_dir) = std::env::var("CLAUDE_CONFIG_DIR") {
         paths.push(Path::new(&config_dir).join("statusline.yml"));
@@ -167,6 +173,9 @@ pub fn default_lines() -> Vec<(String, String)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Mutex;
+
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
     fn deserialize_full_config() {
@@ -267,9 +276,20 @@ lines:
     }
 
     #[test]
-    fn config_candidates_includes_claude_dir() {
+    fn config_candidates_statusline_config_env() {
+        let _lock = ENV_LOCK.lock().unwrap();
+        std::env::set_var("STATUSLINE_CONFIG", "/tmp/custom.yml");
         let paths = config_candidates();
-        assert!(paths[0].ends_with(".claude/statusline.yml"));
+        assert_eq!(paths[0], PathBuf::from("/tmp/custom.yml"));
+        std::env::remove_var("STATUSLINE_CONFIG");
+    }
+
+    #[test]
+    fn config_candidates_includes_claude_dir() {
+        let _lock = ENV_LOCK.lock().unwrap();
+        std::env::remove_var("STATUSLINE_CONFIG");
+        let paths = config_candidates();
+        assert_eq!(paths[0], PathBuf::from(".claude/statusline.yml"));
     }
 
     #[test]

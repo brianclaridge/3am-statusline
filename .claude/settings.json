@@ -21,6 +21,7 @@
   },
   "plansDirectory": ".claude/plans",
   "env": {
+    "COLORTERM": "truecolor",
     "DISABLE_TELEMETRY": "1",
     "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",
     "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
@@ -29,7 +30,8 @@
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
     "CLAUDE_CONFIG_DIR": ".data/claude-data",
     "CLAUDE_CODE_TMPDIR": ".data/claude-tmp",
-    "CLAUDE_CODE_AUTOCOMPACT_PCT_OVERRIDE": "40"
+    "CLAUDE_CODE_AUTOCOMPACT_PCT_OVERRIDE": "40",
+    "STATUSLINE_CONFIG": "config/statusline.yml"
   },
   "permissions": {
     "allow": [
