@@ -27,6 +27,9 @@ tasks:
     desc: Run Claude with specific flags
     deps:
       - update
+    env:
+      CLAUDE_CONFIG_DIR: ".data/claude-data"
+      CLAUDE_CODE_TMPDIR: ".data/claude-tmp"
     vars:
       ARGS: --chrome --ide --model opus
     cmds:

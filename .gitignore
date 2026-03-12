@@ -3,7 +3,6 @@
 .mcp.json
 
 bin/target/
-bin/release/
 __pycache__
 .pytest_cache
 .venv
