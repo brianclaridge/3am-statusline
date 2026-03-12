@@ -1,0 +1,35 @@
+# Example 3am-statusline config
+# Copy to .claude/statusline.yml in your project root
+
+lines:
+  - left: "{model.display_name}"
+    right: "{cost.total_cost_usd|currency}"
+  - left: "{meter:context_window.used_percentage} {context_window.used_percentage|pct} ctx"
+    right: "{context_window.total_input_tokens|tokens} tok"
+
+meter:
+  width: 10
+  filled: "●"
+  empty: "○"
+  thresholds:
+    green: 0
+    yellow: 60
+    red: 85
+
+# events:
+#   - name: branch
+#     command: "git rev-parse --abbrev-ref HEAD 2>/dev/null"
+#     interval: 10s
+#     capture: true
+#   - name: disk
+#     command: "df -h / | tail -1 | awk '{print $5}'"
+#     interval: 5m
+#     capture: true
+
+# budget:
+#   weekly_tokens: 5_000_000
+#   monthly_tokens: 20_000_000
+
+# logging:
+#   dir: ".data/logs/statusline"
+#   keep: 50

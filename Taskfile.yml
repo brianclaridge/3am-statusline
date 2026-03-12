@@ -1,0 +1,57 @@
+version: "3"
+
+dotenv: [".env"]
+
+tasks:
+  default:
+    cmds:
+      - cmd: task --list-all
+    silent: true
+
+  clear:
+    cmds:
+      - cmd: clear
+        platforms: [linux, darwin]
+      - cmd: 'pwsh -NoProfile -Command "try { [Console]::Clear() } catch { }; exit 0"'
+        platforms: [windows]
+    silent: true
+
+  update:
+    desc: Update Claude CLI
+    cmds:
+      - claude update
+      - claude --version
+    silent: true
+
+  claude:
+    desc: Run Claude with specific flags
+    deps:
+      - update
+    vars:
+      ARGS: --chrome --ide --model opus
+    cmds:
+      - claude {{.ARGS}} --continue 2>/dev/null || claude {{.ARGS}}
+    silent: true
+
+  build:
+    desc: Build for all platforms (release)
+    vars:
+      VERSION:
+        sh: 'date -u +"%Y.%m.%d-%s"'
+      TARGETS: x86_64-unknown-linux-musl aarch64-unknown-linux-gnu x86_64-pc-windows-gnu
+    cmds:
+      - for: { var: TARGETS }
+        cmd: BUILD_VERSION={{.VERSION}} cargo build --release --target {{.ITEM}}
+      - BUILD_VERSION={{.VERSION}} cargo build --release
+      - mkdir -p bin/release
+      - cp bin/target/release/3am-statusline bin/release/3am-statusline
+      - cp bin/target/x86_64-unknown-linux-musl/release/3am-statusline bin/release/3am-statusline-linux-x64
+      - cp bin/target/aarch64-unknown-linux-gnu/release/3am-statusline bin/release/3am-statusline-linux-arm64
+      - cp bin/target/x86_64-pc-windows-gnu/release/3am-statusline.exe bin/release/3am-statusline-win-x64.exe
+    silent: true
+
+  test:
+    desc: Run unit tests
+    cmds:
+      - cargo test
+    silent: true
