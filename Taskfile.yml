@@ -40,7 +40,7 @@ tasks:
     desc: Build for all platforms (release)
     vars:
       VERSION:
-        sh: 'date -u +"%Y.%m.%d-%s"'
+        sh: 'echo "$(date -u +%Y.%m.%d)-$(git rev-parse --short HEAD)"'
       TARGETS: x86_64-unknown-linux-musl aarch64-unknown-linux-gnu x86_64-pc-windows-gnu
     cmds:
       - for: { var: TARGETS }

@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "20*"
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test
+
+  build:
+    needs: test
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            binary_name: 3am-statusline-linux-x64
+            deps: musl-tools
+          - runner: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            binary_name: 3am-statusline-linux-arm64
+            deps: gcc-aarch64-linux-gnu
+          - runner: ubuntu-latest
+            target: x86_64-pc-windows-gnu
+            binary_name: 3am-statusline-win-x64.exe
+            deps: mingw-w64
+          - runner: macos-13
+            target: x86_64-apple-darwin
+            binary_name: 3am-statusline-darwin-x64
+            deps: ""
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+            binary_name: 3am-statusline-darwin-arm64
+            deps: ""
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cross-compile dependencies
+        if: matrix.deps != ''
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ${{ matrix.deps }}
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+        env:
+          BUILD_VERSION: ${{ github.ref_name }}
+
+      - name: Rename binary
+        shell: bash
+        run: |
+          src="bin/target/${{ matrix.target }}/release/3am-statusline"
+          if [[ "${{ matrix.binary_name }}" == *.exe ]]; then
+            src="${src}.exe"
+          fi
+          cp "$src" "${{ matrix.binary_name }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.binary_name }}
+          path: ${{ matrix.binary_name }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true
