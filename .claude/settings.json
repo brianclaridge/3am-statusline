@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "model": "Opus",
+  "alwaysThinkingEnabled": true,
+  "fastMode": false,
+  "teammateMode": "auto",
+  "autoMemoryEnabled": true,
+  "effortLevel": "high",
+  "includeCoAuthoredBy": false,
+  "cleanupPeriodDays": 7,
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [],
+  "respectGitignore": false,
+  "showTurnDuration": true,
+  "terminalProgressBarEnabled": false,
+  "outputStyle": "engineer",
+  "statusLine": {
+    "type": "command",
+    "command": "node shim.js",
+    "padding": 1
+  },
+  "plansDirectory": ".claude/plans",
+  "env": {
+    "DISABLE_TELEMETRY": "1",
+    "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1",
+    "MAX_THINKING_TOKENS": "31999",
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "CLAUDE_CONFIG_DIR": ".data/claude-data",
+    "CLAUDE_CODE_TMPDIR": ".data/claude-tmp",
+    "CLAUDE_CODE_AUTOCOMPACT_PCT_OVERRIDE": "40"
+  },
+  "permissions": {
+    "allow": [
+      "Bash",
+      "WebFetch",
+      "WebSearch",
+      "ExitPlanMode",
+      "KillShell",
+      "Skill",
+      "Write",
+      "Edit"
+    ],
+    "deny": [],
+    "ask": ["Bash(rm:*)"],
+    "defaultMode": "plan",
+    "additionalDirectories": []
+  }
+}
