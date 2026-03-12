@@ -16,6 +16,9 @@ lines:
     right: "{c:dim}resets{/c} {ratelimit.7d_eta|dim}"
   - left: "{context_window.total_output_tokens|tokens|value} out"
     right: "{c:green}+{cost.total_lines_added|comma}{/c} {c:red}-{cost.total_lines_removed|comma}{/c} lines"
+  - left: "{c:dim}cwd:{/c} {cwd}"
+  - left: "{event.clock}"
+    right: "cpu {event.cpu}  claude {event.claude}"
   - left: ""
 
 theme:
@@ -39,15 +42,19 @@ logging:
   dir: ".data/logs/statusline"
   keep: 50
 
-# events:
-#   - name: branch
-#     command: "git rev-parse --abbrev-ref HEAD 2>/dev/null"
-#     interval: 10s
-#     capture: true
-#   - name: disk
-#     command: "df -h / | tail -1 | awk '{print $5}'"
-#     interval: 5m
-#     capture: true
+events:
+  - name: claude
+    command: "uv run scripts/status.py"
+    interval: 5m
+    capture: true
+  - name: cpu
+    command: "top -bn1 | awk '/^%Cpu/{printf \"%.0f%%\", 100-$8}'"
+    interval: 10s
+    capture: true
+  - name: clock
+    command: "date +%H:%M"
+    interval: 30s
+    capture: true
 
 # budget:
 #   weekly_tokens: 5_000_000

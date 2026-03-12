@@ -37,6 +37,7 @@ tasks:
     cmds:
       - claude {{.ARGS}} --continue 2>/dev/null || claude {{.ARGS}}
     silent: true
+    interactive: true
 
   build:
     desc: Build for all platforms (release)
@@ -59,6 +60,12 @@ tasks:
     desc: Run unit tests
     cmds:
       - cargo test
+    silent: true
+
+  status:
+    desc: Check Claude API status
+    cmds:
+      - uv run scripts/status.py
     silent: true
 
   release:
