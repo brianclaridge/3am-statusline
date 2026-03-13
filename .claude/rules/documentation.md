@@ -21,4 +21,5 @@
 1. Read `README.md` and `CLAUDE.md` in full before staging
 2. Identify sections affected by the current changes
 3. Edit affected sections to reflect the new state
-4. Stage the doc updates in the same commit as the code changes
+4. Run `git status` and stage **all** modified and untracked files — never leave working tree dirty after a commit
+5. This includes `bin/release/*` binaries after builds, config changes, and any other generated files
