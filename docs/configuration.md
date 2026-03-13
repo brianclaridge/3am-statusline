@@ -146,7 +146,7 @@ logging:
 
 ### Current usage (per-turn)
 
-`current_usage.input_tokens`, `current_usage.output_tokens`, `current_usage.cache_creation_input_tokens`, `current_usage.cache_read_input_tokens`
+`current_usage.input_tokens`, `current_usage.output_tokens`, `current_usage.cache_creation_input_tokens`, `current_usage.cache_read_input_tokens`, `current_usage.total` (sum of all four)
 
 ### Session
 

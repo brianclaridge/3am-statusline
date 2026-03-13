@@ -256,10 +256,6 @@ pub fn default_lines() -> Vec<(String, String)> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Mutex;
-
-    static ENV_LOCK: Mutex<()> = Mutex::new(());
-
     #[test]
     fn deserialize_full_config() {
         let yaml = r#"
@@ -352,20 +348,19 @@ lines:
 
     #[test]
     fn config_candidates_statusline_config_env() {
-        let _lock = ENV_LOCK.lock().unwrap();
-        std::env::set_var("STATUSLINE_CONFIG", "/tmp/custom.yml");
-        let paths = config_candidates();
-        assert_eq!(paths[0], PathBuf::from("/tmp/custom.yml"));
-        std::env::remove_var("STATUSLINE_CONFIG");
+        temp_env::with_var("STATUSLINE_CONFIG", Some("/tmp/custom.yml"), || {
+            let paths = config_candidates();
+            assert_eq!(paths[0], PathBuf::from("/tmp/custom.yml"));
+        });
     }
 
     #[test]
     fn config_candidates_includes_claude_dir() {
-        let _lock = ENV_LOCK.lock().unwrap();
-        std::env::remove_var("STATUSLINE_CONFIG");
-        let paths = config_candidates();
-        assert_eq!(paths[0], PathBuf::from("config/statusline.yml"));
-        assert_eq!(paths[1], PathBuf::from(".claude/statusline.yml"));
+        temp_env::with_var_unset("STATUSLINE_CONFIG", || {
+            let paths = config_candidates();
+            assert_eq!(paths[0], PathBuf::from("config/statusline.yml"));
+            assert_eq!(paths[1], PathBuf::from(".claude/statusline.yml"));
+        });
     }
 
     #[test]

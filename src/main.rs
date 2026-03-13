@@ -390,6 +390,8 @@ fn build_context(payload: &StatusPayload) -> (HashMap<String, f64>, HashMap<Stri
         nums.insert("current_usage.output_tokens".into(), cu.output_tokens as f64);
         nums.insert("current_usage.cache_creation_input_tokens".into(), cu.cache_creation_input_tokens as f64);
         nums.insert("current_usage.cache_read_input_tokens".into(), cu.cache_read_input_tokens as f64);
+        let total = cu.input_tokens + cu.output_tokens + cu.cache_creation_input_tokens + cu.cache_read_input_tokens;
+        nums.insert("current_usage.total".into(), total as f64);
     }
 
     // Session

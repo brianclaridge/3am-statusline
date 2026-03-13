@@ -23,6 +23,9 @@ sysinfo = "0.33"
 ureq = "3"
 unicode-width = "0.2"
 
+[dev-dependencies]
+temp-env = "0.3"
+
 [profile.release]
 strip = true
 lto = true
