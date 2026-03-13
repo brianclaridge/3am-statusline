@@ -12,7 +12,7 @@ lines:
   - left: "{c:dim}session:{/c} {c:session}{session_id}{/c}"
     right: "{c:plan}{plan.slug}{/c}"
   - left: "{c:model}{model.display_name}{/c} {c:dim}v{version}{/c}"
-    right: "{cost.total_cost_usd|currency|cost}"
+    right: "{c:green}+{cost.total_lines_added|comma}{/c} {c:red}-{cost.total_lines_removed|comma}{/c} lines [{cost.total_cost_usd|currency|cost}]"
   - left: "{meter:context_window.used_percentage} {context_window.used_percentage|pct|value} ctx"
     right: "{context_window.total_input_tokens|tokens|value} tok"
   - left: "{meter:ratelimit.5h} {ratelimit.5h|pct|value} session"
@@ -20,9 +20,10 @@ lines:
   - left: "{meter:ratelimit.7d} {ratelimit.7d|pct|value} weekly"
     right: "{c:dim}resets{/c} {ratelimit.7d_eta|dim}"
   - left: "{context_window.total_output_tokens|tokens|value} out"
-    right: "{c:green}+{cost.total_lines_added|comma}{/c} {c:red}-{cost.total_lines_removed|comma}{/c} lines"
+    right: ""
   - left: "{c:dim}pst{/c} {c:clock}{event.pst}{/c} {c:sep}|{/c} {c:dim}mst{/c} {c:clock}{event.mst}{/c} {c:sep}|{/c} {c:dim}cst{/c} {c:clock}{event.cst}{/c} {c:sep}|{/c} {c:dim}est{/c} {c:clock}{event.est}{/c}"
     right: "{c:cpu}cpu {event.cpu}{/c} {c:sep}|{/c} {event.claude}"
+  - left: "{c:git}{event.git}{/c}"
   - left: ""
 
 theme:
@@ -36,6 +37,7 @@ theme:
   cpu: "33"         # yellow
   api: "36"         # cyan
   sep: "2"          # dim
+  git: "92"         # bright green
 
 meter:
   width: 10
@@ -69,6 +71,10 @@ events:
     capture: true
   - name: est
     command: "uv run scripts/time.py EST"
+    interval: 5s
+    capture: true
+  - name: git
+    command: "uv run scripts/git_status.py"
     interval: 5s
     capture: true
 
