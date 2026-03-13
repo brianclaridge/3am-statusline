@@ -5,7 +5,7 @@ Standalone Rust binary that renders a configurable status display for Claude Cod
 ## Quick reference
 
 | Action | Command |
-| -------- | --------- |
+| --- | --- |
 | Build all platforms | `task build` |
 | Run tests | `task test` |
 | Test render | `echo '{}' \| ./bin/target/debug/3am-statusline` |
@@ -30,7 +30,7 @@ src/
     weather.rs  # Weather via Open-Meteo + Zippopotam.us geocoding (JSON)
   events.rs     # Timer-based event system (shell commands at intervals)
   payload.rs    # Serde types for Claude Code JSON schema
-  template.rs   # Template parser: {field}, {field|format}, {meter:field}
+  template.rs   # Template parser: {field}, {field|format}, {meter:field}, {sep}
   meter.rs      # Meter rendering with ANSI colors
   format.rs     # Format specifiers (currency, pct, duration, tokens, comma)
   ratelimit.rs  # Anthropic API rate limit cache
@@ -48,74 +48,15 @@ skills/
 bin/release/        # Pre-built binaries per platform
 ```
 
-## Config (`statusline.yml`)
+## Extended docs
 
-Five sections: `lines`, `meter`, `color_fields`, `events`, `logging`.
-
-### Config search order
-
-1. `$STATUSLINE_CONFIG` (explicit override via env var)
-2. `config/statusline.yml` (project-local)
-3. `.claude/statusline.yml` (legacy project-local)
-4. `$CLAUDE_CONFIG_DIR/statusline.yml` (per-user)
-5. Built-in default (hardcoded two-line layout)
-
-### Template tokens
-
-| Form | Example | Renders |
-| ------ | --------- | --------- |
-| `{field.path}` | `{model.display_name}` | `Opus 4.6` |
-| `{field.path\|format}` | `{cost.total_cost_usd\|currency}` | `$0.55` |
-| `{field.path\|color}` | `{model.display_name\|dim}` | dim text |
-| `{meter:field.path}` | `{meter:context_window.used_percentage}` | `[###-------]` |
-| `{event.name}` | `{event.branch}` | `main` |
-| `{current_usage.field}` | `{current_usage.cache_read_input_tokens\|tokens}` | `130K` |
-| `{sep}` | `{sep}` | themed separator (default `\|`) |
-
-### Format specifiers
-
-| Specifier | Input | Output |
-| ----------- | ------- | -------- |
-| `currency` | `0.55` | `$0.55` |
-| `pct` | `8.3` | `8%` |
-| `duration` | `45` | `45s` |
-| `tokens` | `15234` | `15.2K` |
-| `comma` | `15234` | `15,234` |
-
-## Events
-
-Timer-based command execution. Built-in event subcommands replace the old Python scripts:
-
-```text
-3am-statusline event git      # {"branch":"main","sha":"2620eb7","sync":"↑1","dirty":"~3 +1 ?2"}
-3am-statusline event time     # {"pst":"3:45","pst_icon":"☀️","mst":"5:45","mst_icon":"🌅",...}
-3am-statusline event sys      # {"cpu":"12%","cores":"8","mem":"4.2/16G (26%)","mem_pct":"26%","mem_used":"4G","mem_total":"16G"}
-3am-statusline event status   # 🟢 ok
-3am-statusline event version  # {"latest":"2.1.74"}
-3am-statusline event weather --zip 98101  # {"emoji":"🌧️","temp":"39°F","condition":"drizzle"}
-```
-
-Config wires these as event commands at intervals:
-
-```yaml
-events:
-  - name: git
-    command: "${CLAUDE_PLUGIN_ROOT}/bin/release/3am-statusline event git"
-    interval: 5s
-    capture: true
-```
-
-| `capture` | Behavior |
-| ----------- | ---------- |
-| `true` | Blocks, captures stdout, injects as `{event.name}` |
-| `false` | Fire-and-forget, no stdout capture |
-
-Sentinel: `.data/statusline/events.json`
+- [Configuration](docs/configuration.md) — config sections, template tokens, fields, color fields
+- [Events](docs/events.md) — built-in events, custom events, wiring
 
 ## Cross-platform
 
 | Target | Binary |
-| -------- | -------- |
+| --- | --- |
 | `x86_64-unknown-linux-musl` | `3am-statusline-linux-x64` |
 | `aarch64-unknown-linux-gnu` | `3am-statusline-linux-arm64` |
 | `x86_64-pc-windows-gnu` | `3am-statusline-win-x64.exe` |
@@ -131,7 +72,7 @@ macOS binaries require building on macOS (no cross-compile from Linux).
 - serde + serde_json + serde_yml for data
 - chrono + chrono-tz for timestamps and timezone conversion
 - sysinfo for cross-platform CPU/memory stats
-- ureq for blocking HTTP (Claude API status, Open-Meteo weather, Zippopotam.us geocoding)
+- ureq for blocking HTTP (Claude API status, Open-Meteo weather, GitHub releases, Zippopotam.us geocoding)
 - anyhow for errors
 - unicode-width for emoji/wide-character display width calculation
 - Raw ANSI escape codes (no colored crate)

@@ -19,6 +19,8 @@ pub struct StatuslineConfig {
     pub events: Vec<EventConfig>,
     #[serde(default)]
     pub color_fields: Vec<ColorFieldConfig>,
+    #[serde(default)]
+    pub columns: Option<usize>,
 }
 
 #[derive(Debug, Deserialize)]

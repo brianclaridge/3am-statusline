@@ -285,11 +285,10 @@ fn truncate_visible(s: &str, max_visible: usize) -> String {
     result
 }
 
-/// Detect terminal width from the COLUMNS env var or default to 80.
-pub fn terminal_width() -> usize {
-    std::env::var("COLUMNS")
-        .ok()
-        .and_then(|s| s.parse().ok())
+/// Resolve terminal width: config override > COLUMNS env var > 80.
+pub fn terminal_width(config_columns: Option<usize>) -> usize {
+    config_columns
+        .or_else(|| std::env::var("COLUMNS").ok().and_then(|s| s.parse().ok()))
         .unwrap_or(80)
 }
 

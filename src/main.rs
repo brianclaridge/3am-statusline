@@ -112,7 +112,8 @@ fn render() -> Result<()> {
     let payload: StatusPayload =
         serde_json::from_str(&input).context("parsing JSON payload")?;
     let use_color = meter::should_use_color();
-    let width = template::terminal_width();
+    let config_columns = cfg.as_ref().and_then(|c| c.columns);
+    let width = template::terminal_width(config_columns);
 
     let meter_config = cfg
         .as_ref()
