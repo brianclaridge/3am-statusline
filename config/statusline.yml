@@ -8,6 +8,7 @@ logging:
 lines:
   - left: ""
   - left: ""
+  - left: "{c:dim}cwd:{/c} {cwd}"
   - left: "{c:dim}session:{/c} {c:session}{session_id}{/c}"
     right: "{c:plan}{plan.slug}{/c}"
   - left: "{c:model}{model.display_name}{/c} {c:dim}v{version}{/c}"
@@ -20,7 +21,6 @@ lines:
     right: "{c:dim}resets{/c} {ratelimit.7d_eta|dim}"
   - left: "{context_window.total_output_tokens|tokens|value} out"
     right: "{c:green}+{cost.total_lines_added|comma}{/c} {c:red}-{cost.total_lines_removed|comma}{/c} lines"
-  - left: "{c:dim}cwd:{/c} {cwd}"
   - left: "{c:dim}pst{/c} {c:clock}{event.pst}{/c} {c:sep}|{/c} {c:dim}mst{/c} {c:clock}{event.mst}{/c} {c:sep}|{/c} {c:dim}cst{/c} {c:clock}{event.cst}{/c} {c:sep}|{/c} {c:dim}est{/c} {c:clock}{event.est}{/c}"
     right: "{c:cpu}cpu {event.cpu}{/c} {c:sep}|{/c} {event.claude}"
   - left: ""
@@ -29,7 +29,7 @@ theme:
   model: "1"        # bold
   cost: "32"        # green
   value: "36"       # cyan
-  session: "2"      # dim
+  session: "34"     # blue
   plan: "33"        # yellow
   dim: "2"          # dim
   clock: "35"       # magenta
