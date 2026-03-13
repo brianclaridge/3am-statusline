@@ -13,25 +13,28 @@ logging:
 lines:
   - left: ""
   - left: ""
-  - left: "{c:dim}cwd:{/c} {cwd}"
-  - left: "{c:dim}session:{/c} {c:session}{session_id}{/c}"
-    right: "{c:plan}{plan.slug}{/c}"
-  - left: "{c:model}Claude {model.display_name}{/c} {c:sep}|{/c} {c:dim}v{version}{/c} {c:sep}|{/c} {event.claude}"
+  - left: "{c:dim}plan:{/c} {c:plan}{plan.slug}{/c}"
+    right: "{c:dim}session:{/c} {c:session}{session_id}{/c}"
+  - left: ""
+  - left: "{c:model}Claude{/c} {c:model_name}{model.display_name}{/c} {c:sep}|{/c} {c:dim}v{version}{/c} {c:sep}|{/c} {event.claude}"
     right: "{c:green}+{cost.total_lines_added|comma}{/c} {c:red}-{cost.total_lines_removed|comma}{/c} lines [{cost.total_cost_usd|currency|cost}]"
-  - left: "{meter:context_window.used_percentage} {context_window.used_percentage|pct|value} ctx"
+  - left: "{meter:context_window.used_percentage} {c:green}{ctx_pct_green}{/c}{c:1;33}{ctx_pct_yellow}{/c}{c:1;31}{ctx_pct_red}{/c} ctx"
     right: "{context_window.total_input_tokens|tokens|value} tok {c:sep}|{/c} {context_window.total_output_tokens|tokens|value} out"
-  - left: "{meter:ratelimit.5h} {ratelimit.5h|pct|value} session"
+  - left: "{meter:ratelimit.5h} {c:green}{rl_5h_green}{/c}{c:1;33}{rl_5h_yellow}{/c}{c:1;31}{rl_5h_red}{/c} session"
     right: "{c:dim}resets{/c} {ratelimit.5h_eta|dim}"
-  - left: "{meter:ratelimit.7d} {ratelimit.7d|pct|value} weekly"
+  - left: "{meter:ratelimit.7d} {c:green}{rl_7d_green}{/c}{c:1;33}{rl_7d_yellow}{/c}{c:1;31}{rl_7d_red}{/c} weekly"
     right: "{c:dim}resets{/c} {ratelimit.7d_eta|dim}"
-  - left: "{c:clock}{event.time.pst}{/c} {event.time.pst_icon} {c:sep}|{/c} {c:clock}{event.time.mst}{/c} {event.time.mst_icon} {c:sep}|{/c} {c:clock}{event.time.cst}{/c} {event.time.cst_icon} {c:sep}|{/c} {c:clock}{event.time.est}{/c} {event.time.est_icon}"
+  - left: ""
+  - left: "{c:dim}cwd:{/c} {cwd}"
     right: "{c:dim}cpu:{/c} {c:cpu}{event.sys.cpu}{/c} {c:sep}|{/c} {c:dim}mem:{/c} {c:mem}({event.sys.mem_pct}, {event.sys.mem_used}/{event.sys.mem_total}){/c}"
-  - left: "{event.weather.emoji} {event.weather.temp} {c:dim}{event.weather.condition}{/c}"
-  - left: "🌿 {c:branch}{event.git.branch}{/c} {c:dim}{event.git.sha}{/c} {c:sync}{event.git.sync}{/c} {c:dirty}{event.git.dirty}{/c}"
+  - left: "{c:dim}git:{/c} 🌿 {c:branch}{event.git.branch}{/c} {c:dim}{event.git.sha}{/c} {c:sync}{event.git.sync}{/c} {c:dirty}{event.git.dirty}{/c}"
+  - left: "{c:dim}pst:{/c} {c:clock}{event.time.pst}{/c} {event.time.pst_icon} {c:sep}|{/c} {c:dim}mst:{/c} {c:clock}{event.time.mst}{/c} {event.time.mst_icon} {c:sep}|{/c} {c:dim}cst:{/c} {c:clock}{event.time.cst}{/c} {event.time.cst_icon} {c:sep}|{/c} {c:dim}est:{/c} {c:clock}{event.time.est}{/c} {event.time.est_icon}"
+  - left: "{c:dim}{event.weather.zip}:{/c} {c:cold}{event.weather.temp_cold}{/c}{c:warm}{event.weather.temp_warm}{/c}{c:hot}{event.weather.temp_hot}{/c} {event.weather.emoji}"
   - left: ""
 
 theme:
   model: "1"        # bold
+  model_name: "1;36" # bold cyan
   cost: "32"        # green
   value: "36"       # cyan
   session: "34"     # blue
@@ -45,6 +48,9 @@ theme:
   branch: "92"      # bright green
   sync: "36"        # cyan
   dirty: "33"       # yellow
+  cold: "34"        # blue
+  warm: "33"        # yellow
+  hot: "31"         # red
 
 meter:
   width: 10
@@ -54,6 +60,23 @@ meter:
     green: 0
     yellow: 60
     red: 85
+
+color_fields:
+  - name: ctx_pct
+    source: "context_window.used_percentage"
+    format: "pct"
+    yellow: 40
+    red: 60
+  - name: rl_5h
+    source: "ratelimit.5h"
+    format: "pct"
+    yellow: 40
+    red: 60
+  - name: rl_7d
+    source: "ratelimit.7d"
+    format: "pct"
+    yellow: 40
+    red: 60
 
 events:
   - name: claude
@@ -73,6 +96,6 @@ events:
     interval: 8s
     capture: true
   - name: weather
-    command: "${CLAUDE_PLUGIN_ROOT}/bin/release/3am-statusline event weather --zip 98101"
+    command: "${CLAUDE_PLUGIN_ROOT}/bin/release/3am-statusline event weather --zip 98221"
     interval: 15m
     capture: true

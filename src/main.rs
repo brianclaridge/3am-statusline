@@ -159,6 +159,27 @@ fn render() -> Result<()> {
         }
     }
 
+    // Process color fields: threshold-based coloring for inline values
+    if let Some(ref cfg) = cfg {
+        for cf in &cfg.color_fields {
+            if let Some(&val) = context.get(&cf.source) {
+                let formatted = cf.format.as_deref()
+                    .map(|f| format::apply(val, f))
+                    .unwrap_or_else(|| val.to_string());
+                let (g, y, r) = if val < cf.yellow {
+                    (formatted.clone(), String::new(), String::new())
+                } else if val < cf.red {
+                    (String::new(), formatted.clone(), String::new())
+                } else {
+                    (String::new(), String::new(), formatted)
+                };
+                strings.insert(format!("{}_green", cf.name), g);
+                strings.insert(format!("{}_yellow", cf.name), y);
+                strings.insert(format!("{}_red", cf.name), r);
+            }
+        }
+    }
+
     let mut output = String::new();
     for (i, (left_tpl, right_tpl)) in lines.iter().enumerate() {
         let left = template::resolve(left_tpl, &context, &strings, &meter_config, use_color, &theme);

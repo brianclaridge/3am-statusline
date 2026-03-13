@@ -50,7 +50,7 @@ bin/release/        # Pre-built binaries per platform
 
 ## Config (`statusline.yml`)
 
-Five sections: `lines`, `meter`, `events`, `budget`, `logging`.
+Six sections: `lines`, `meter`, `color_fields`, `events`, `budget`, `logging`.
 
 ### Config search order
 
@@ -130,4 +130,5 @@ macOS binaries require building on macOS (no cross-compile from Linux).
 - sysinfo for cross-platform CPU/memory stats
 - ureq for blocking HTTP (Claude API status, Open-Meteo weather, Zippopotam.us geocoding)
 - anyhow for errors
+- unicode-width for emoji/wide-character display width calculation
 - Raw ANSI escape codes (no colored crate)

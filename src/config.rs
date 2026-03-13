@@ -18,6 +18,8 @@ pub struct StatuslineConfig {
     pub logging: Option<LoggingConfig>,
     #[serde(default)]
     pub events: Vec<EventConfig>,
+    #[serde(default)]
+    pub color_fields: Vec<ColorFieldConfig>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -108,6 +110,21 @@ pub struct EventConfig {
     #[serde(default)]
     pub capture: bool,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct ColorFieldConfig {
+    pub name: String,
+    pub source: String,
+    #[serde(default)]
+    pub format: Option<String>,
+    #[serde(default = "default_cf_yellow")]
+    pub yellow: f64,
+    #[serde(default = "default_cf_red")]
+    pub red: f64,
+}
+
+fn default_cf_yellow() -> f64 { 40.0 }
+fn default_cf_red() -> f64 { 60.0 }
 
 fn default_state_dir() -> String { ".data/statusline".into() }
 fn default_log_file() -> String { ".data/statusline/statusline.log".into() }

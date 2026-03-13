@@ -7,8 +7,12 @@ const GEOCODE_CACHE: &str = ".data/statusline/geocode.json";
 
 #[derive(Serialize)]
 struct WeatherOutput {
+    zip: String,
     emoji: String,
     temp: String,
+    temp_cold: String,
+    temp_warm: String,
+    temp_hot: String,
     condition: String,
 }
 
@@ -114,10 +118,24 @@ fn gather(zip: &str) -> Result<WeatherOutput> {
 
     let is_day = resp.current.is_day == 1;
     let (emoji, condition) = wmo_emoji(resp.current.weather_code, is_day);
+    let temp_str = format!("{:.0}\u{00b0}F", resp.current.temperature_2m);
+    let temp_f = resp.current.temperature_2m;
+
+    let (temp_cold, temp_warm, temp_hot) = if temp_f < 50.0 {
+        (temp_str.clone(), String::new(), String::new())
+    } else if temp_f < 80.0 {
+        (String::new(), temp_str.clone(), String::new())
+    } else {
+        (String::new(), String::new(), temp_str.clone())
+    };
 
     Ok(WeatherOutput {
+        zip: zip.to_string(),
         emoji: emoji.to_string(),
-        temp: format!("{:.0}\u{00b0}F", resp.current.temperature_2m),
+        temp: temp_str,
+        temp_cold,
+        temp_warm,
+        temp_hot,
         condition: condition.to_string(),
     })
 }

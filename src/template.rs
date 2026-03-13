@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+use unicode_width::UnicodeWidthChar;
+
 use crate::format;
 use crate::meter::{self, MeterConfig};
 
@@ -47,7 +49,8 @@ pub fn resolve(
     result
 }
 
-/// Map a color name to an ANSI code. Checks theme first, then built-in names.
+/// Map a color name to an ANSI code. Checks theme first, then built-in names,
+/// then raw ANSI codes (e.g. "1;33", "38;5;196").
 fn color_code(name: &str, theme: &HashMap<String, String>) -> Option<String> {
     if let Some(code) = theme.get(name) {
         return Some(code.clone());
@@ -68,7 +71,13 @@ fn color_code(name: &str, theme: &HashMap<String, String>) -> Option<String> {
         "bright_blue" => "94",
         "bright_magenta" => "95",
         "bright_cyan" => "96",
-        _ => return None,
+        _ => {
+            // Accept raw ANSI codes (digits and semicolons only)
+            if !name.is_empty() && name.bytes().all(|b| b.is_ascii_digit() || b == b';') {
+                return Some(name.to_string());
+            }
+            return None;
+        }
     };
     Some(code.to_string())
 }
@@ -191,7 +200,21 @@ pub fn pad_line(left: &str, right: &str, width: usize) -> String {
     }
 }
 
-/// Count visible (non-ANSI-escape) characters in a string.
+/// Display width of a character, with emoji override.
+/// The `unicode-width` crate uses East Asian Width which marks some emoji as
+/// width 1, but terminals render them at width 2 (especially with VS16).
+fn char_width(ch: char) -> usize {
+    let cp = ch as u32;
+    // Emoji in Miscellaneous Symbols and Pictographs, Emoticons, Transport,
+    // Supplemental Symbols, etc. — terminals render these as 2 columns
+    if matches!(cp, 0x1F300..=0x1F9FF | 0x2600..=0x27BF | 0x2B50..=0x2B55) {
+        return 2;
+    }
+    ch.width().unwrap_or(0)
+}
+
+/// Count visible display width of a string, skipping ANSI escapes and
+/// accounting for wide characters (CJK, emoji).
 fn strip_ansi_len(s: &str) -> usize {
     let mut len = 0;
     let mut in_escape = false;
@@ -203,13 +226,14 @@ fn strip_ansi_len(s: &str) -> usize {
         } else if ch == '\x1b' {
             in_escape = true;
         } else {
-            len += 1;
+            len += char_width(ch);
         }
     }
     len
 }
 
-/// Truncate a string to `max_visible` visible characters, preserving ANSI codes.
+/// Truncate a string to `max_visible` display columns, preserving ANSI codes
+/// and accounting for wide characters.
 fn truncate_visible(s: &str, max_visible: usize) -> String {
     let mut result = String::new();
     let mut visible = 0;
@@ -223,11 +247,14 @@ fn truncate_visible(s: &str, max_visible: usize) -> String {
         } else if ch == '\x1b' {
             in_escape = true;
             result.push(ch);
-        } else if visible < max_visible {
-            result.push(ch);
-            visible += 1;
         } else {
-            break;
+            let w = char_width(ch);
+            if visible + w <= max_visible {
+                result.push(ch);
+                visible += w;
+            } else {
+                break;
+            }
         }
     }
     result

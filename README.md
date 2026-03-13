@@ -121,6 +121,27 @@ Weather uses [Open-Meteo](https://open-meteo.com/) (free, no API key). Zip code 
 
 Use in templates: `{event.git.branch}`, `{event.sys.cpu}`, `{event.weather.emoji}`, `{event.weather.temp}`, `{event.disk}`
 
+## Color fields
+
+Threshold-based coloring for inline values. Each color field generates three template slots (`_green`, `_yellow`, `_red`) — only the active tier is populated:
+
+```yaml
+color_fields:
+  - name: ctx_pct
+    source: "context_window.used_percentage"
+    format: "pct"
+    yellow: 40
+    red: 60
+```
+
+Use in templates with color tags:
+
+```yaml
+- left: "{c:green}{ctx_pct_green}{/c}{c:1;33}{ctx_pct_yellow}{/c}{c:1;31}{ctx_pct_red}{/c} ctx"
+```
+
+The `{c:...}` tag accepts theme names (`green`, `dim`) or raw ANSI codes (`1;33` for bold yellow).
+
 ## Budget tracking
 
 Track token usage against weekly/monthly limits:
