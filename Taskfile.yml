@@ -62,6 +62,12 @@ tasks:
       - cargo test
     silent: true
 
+  time:
+    desc: Show world clocks
+    cmds:
+      - uv run scripts/time.py PST MST CST EST
+    silent: true
+
   status:
     desc: Check Claude API status
     cmds:

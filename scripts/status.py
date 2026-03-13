@@ -8,12 +8,12 @@ import sys
 import urllib.request
 
 URL = "https://status.claude.com/api/v2/status.json"
-INDICATORS = {"none": "healthy", "minor": "degraded", "major": "outage", "critical": "outage"}
+INDICATORS = {"none": "🟢 ok", "minor": "🟡 slow", "major": "🔴 down", "critical": "🔴 down"}
 
 try:
     with urllib.request.urlopen(URL, timeout=5) as resp:
         data = json.loads(resp.read())
-    print(INDICATORS.get(data["status"]["indicator"], "unknown"))
+    print(INDICATORS.get(data["status"]["indicator"], "⚪ ???"))
 except Exception:
-    print("unknown")
+    print("⚪ ???")
     sys.exit(1)

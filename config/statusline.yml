@@ -1,6 +1,10 @@
 # Example 3am-statusline config
 # Copy to .claude/statusline.yml in your project root
 
+logging:
+  dir: ".data/logs/statusline"
+  keep: 15
+
 lines:
   - left: ""
   - left: ""
@@ -17,8 +21,8 @@ lines:
   - left: "{context_window.total_output_tokens|tokens|value} out"
     right: "{c:green}+{cost.total_lines_added|comma}{/c} {c:red}-{cost.total_lines_removed|comma}{/c} lines"
   - left: "{c:dim}cwd:{/c} {cwd}"
-  - left: "{event.clock}"
-    right: "cpu {event.cpu}  claude {event.claude}"
+  - left: "{c:dim}pst{/c} {c:clock}{event.pst}{/c} {c:sep}|{/c} {c:dim}mst{/c} {c:clock}{event.mst}{/c} {c:sep}|{/c} {c:dim}cst{/c} {c:clock}{event.cst}{/c} {c:sep}|{/c} {c:dim}est{/c} {c:clock}{event.est}{/c}"
+    right: "{c:cpu}cpu {event.cpu}{/c} {c:sep}|{/c} {event.claude}"
   - left: ""
 
 theme:
@@ -28,6 +32,10 @@ theme:
   session: "2"      # dim
   plan: "33"        # yellow
   dim: "2"          # dim
+  clock: "35"       # magenta
+  cpu: "33"         # yellow
+  api: "36"         # cyan
+  sep: "2"          # dim
 
 meter:
   width: 10
@@ -38,10 +46,6 @@ meter:
     yellow: 60
     red: 85
 
-logging:
-  dir: ".data/logs/statusline"
-  keep: 50
-
 events:
   - name: claude
     command: "uv run scripts/status.py"
@@ -51,15 +55,23 @@ events:
     command: "top -bn1 | awk '/^%Cpu/{printf \"%.0f%%\", 100-$8}'"
     interval: 10s
     capture: true
-  - name: clock
-    command: "date +%H:%M"
+  - name: pst
+    command: "uv run scripts/time.py PST"
+    interval: 30s
+    capture: true
+  - name: mst
+    command: "uv run scripts/time.py MST"
+    interval: 30s
+    capture: true
+  - name: cst
+    command: "uv run scripts/time.py CST"
+    interval: 30s
+    capture: true
+  - name: est
+    command: "uv run scripts/time.py EST"
     interval: 30s
     capture: true
 
 # budget:
 #   weekly_tokens: 5_000_000
 #   monthly_tokens: 20_000_000
-
-# logging:
-#   dir: ".data/logs/statusline"
-#   keep: 50
