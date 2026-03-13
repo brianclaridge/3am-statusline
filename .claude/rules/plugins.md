@@ -2,6 +2,13 @@
 
 Reference for building and installing Claude Code plugins.
 
+## Official Documentation
+
+> Always leverage official documentation:
+
+- [https://code.claude.com/docs/en/plugins-reference](https://code.claude.com/docs/en/plugins-reference)
+- [https://code.claude.com/docs/en/plugin-marketplaces](https://code.claude.com/docs/en/plugin-marketplaces)
+
 ## File structure
 
 ```text
@@ -15,27 +22,27 @@ my-plugin/
 
 ## Manifest (`plugin.json`)
 
-| Field | Type | Description |
-| --- | --- | --- |
-| `name` | string | Plugin identifier (lowercase, hyphens) |
-| `version` | string | Version string (this project uses `YYYY.MM.DD-gitsha`) |
-| `description` | string | One-line summary |
-| `author` | object/string | `{ "name": "..." }` or plain string |
-| `repository` | string | Git URL |
-| `license` | string | SPDX identifier |
-| `keywords` | string[] | Discovery tags |
-| `skills` | string | Path to skills directory (default `skills/`) |
+| Field         | Type          | Description                                            |
+| ------------- | ------------- | ------------------------------------------------------ |
+| `name`        | string        | Plugin identifier (lowercase, hyphens)                 |
+| `version`     | string        | Version string (this project uses `YYYY.MM.DD-gitsha`) |
+| `description` | string        | One-line summary                                       |
+| `author`      | object/string | `{ "name": "..." }` or plain string                    |
+| `repository`  | string        | Git URL                                                |
+| `license`     | string        | SPDX identifier                                        |
+| `keywords`    | string[]      | Discovery tags                                         |
+| `skills`      | string        | Path to skills directory (default `skills/`)           |
 
 ## Skills
 
 Each skill is a `SKILL.md` file in the skills directory.
 
-| Concept | Detail |
-| --- | --- |
-| **Naming** | `plugin-name:skill-name` (colon-separated) |
-| **Invocation** | `/plugin-name:skill-name` from the Claude Code prompt |
-| **Format** | Markdown with frontmatter defining the skill metadata |
-| **Execution** | Skills can run shell commands and access environment variables |
+| Concept        | Detail                                                         |
+| -------------- | -------------------------------------------------------------- |
+| **Naming**     | `plugin-name:skill-name` (colon-separated)                     |
+| **Invocation** | `/plugin-name:skill-name` from the Claude Code prompt          |
+| **Format**     | Markdown with frontmatter defining the skill metadata          |
+| **Execution**  | Skills can run shell commands and access environment variables |
 
 ### SKILL.md frontmatter
 
@@ -50,11 +57,11 @@ The body contains the prompt template and instructions for Claude Code.
 
 ## Installation
 
-| Method | Command |
-| --- | --- |
-| **From marketplace** | `claude plugin add <plugin-name>` |
-| **Local development** | `claude plugin add --plugin-dir ./` |
-| **Remove** | `claude plugin remove <plugin-name>` |
+| Method                | Command                              |
+| --------------------- | ------------------------------------ |
+| **From marketplace**  | `claude plugin add <plugin-name>`    |
+| **Local development** | `claude plugin add --plugin-dir ./`  |
+| **Remove**            | `claude plugin remove <plugin-name>` |
 
 ## Key concepts
 

@@ -40,7 +40,7 @@ src/
 
 ```text
 .claude-plugin/
-  plugin.json       # Plugin manifest (name, version, skills path)
+  plugin.json       # Plugin manifest (name, version, metadata)
   marketplace.json  # Self-hosted marketplace for git-based install
 skills/
   setup/
@@ -49,6 +49,15 @@ skills/
     SKILL.md        # /3am-statusline:theme — browse and apply color themes
 bin/release/        # Pre-built binaries per platform
 ```
+
+## Marketplace
+
+Marketplace manifest is hosted in a separate sibling repo:
+
+| Item | Path |
+| --- | --- |
+| Marketplace repo | `../3am/` (`../3am`) |
+| Manifest | `../3am/.claude-plugin/marketplace.json` |
 
 ## Extended docs
 

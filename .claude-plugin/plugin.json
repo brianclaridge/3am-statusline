@@ -1,10 +1,9 @@
 {
   "name": "3am-statusline",
-  "version": "2026.03.13-b10ab46",
+  "version": "2026.03.12-8acf29b",
   "description": "Configurable statusline for Claude Code sessions",
   "author": { "name": "Brian Claridge" },
   "repository": "https://github.com/brianclaridge/3am-statusline",
   "license": "MIT",
-  "keywords": ["statusline", "status", "display", "terminal"],
-  "skills": "./skills/"
+  "keywords": ["statusline", "status", "display", "terminal"]
 }
