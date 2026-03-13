@@ -8,7 +8,7 @@ A configurable status bar for [Claude Code](https://docs.anthropic.com/en/docs/c
 
 ```bash
 /plugin marketplace add brianclaridge/3am-statusline
-/plugin install 3am-statusline@3am
+/plugin install 3am-statusline@3am-statusline
 ```
 
 Then run the setup skill:
@@ -98,11 +98,11 @@ Wire them into your config:
 ```yaml
 events:
   - name: git
-    command: "3am-statusline event git"
+    command: "${CLAUDE_PLUGIN_ROOT}/bin/release/3am-statusline event git"
     interval: 5s
     capture: true
   - name: sys
-    command: "3am-statusline event sys"
+    command: "${CLAUDE_PLUGIN_ROOT}/bin/release/3am-statusline event sys"
     interval: 3s
     capture: true
 ```

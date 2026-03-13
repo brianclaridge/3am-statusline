@@ -107,19 +107,35 @@ pub fn inject_fields(
     }
 }
 
+/// Resolve plugin root by walking up from the exe to find `.claude-plugin/plugin.json`.
+fn plugin_root() -> Option<String> {
+    let exe = std::env::current_exe().ok()?;
+    let exe = exe.canonicalize().ok()?;
+    let mut dir = exe.parent()?;
+    loop {
+        if dir.join(".claude-plugin/plugin.json").exists() {
+            return Some(dir.to_string_lossy().into_owned());
+        }
+        dir = dir.parent()?;
+    }
+}
+
 /// Execute due events and update the cache.
 pub fn fire(events: &[&EventConfig], cache: &mut EventCache) {
     let now = chrono::Utc::now().timestamp();
+    let root = plugin_root();
 
     for cfg in events {
         let (shell, flag) = shell_command();
 
         if cfg.capture {
             // Blocking: capture stdout
-            let result = std::process::Command::new(shell)
-                .arg(flag)
-                .arg(&cfg.command)
-                .output();
+            let mut cmd = std::process::Command::new(shell);
+            cmd.arg(flag).arg(&cfg.command);
+            if let Some(ref root) = root {
+                cmd.env("CLAUDE_PLUGIN_ROOT", root);
+            }
+            let result = cmd.output();
 
             let (stdout, exit_code) = match result {
                 Ok(output) => {
@@ -145,12 +161,15 @@ pub fn fire(events: &[&EventConfig], cache: &mut EventCache) {
             );
         } else {
             // Fire-and-forget: spawn and drop
-            let _ = std::process::Command::new(shell)
-                .arg(flag)
+            let mut cmd = std::process::Command::new(shell);
+            cmd.arg(flag)
                 .arg(&cfg.command)
                 .stdout(std::process::Stdio::null())
-                .stderr(std::process::Stdio::null())
-                .spawn();
+                .stderr(std::process::Stdio::null());
+            if let Some(ref root) = root {
+                cmd.env("CLAUDE_PLUGIN_ROOT", root);
+            }
+            let _ = cmd.spawn();
 
             cache.entries.insert(
                 cfg.name.clone(),

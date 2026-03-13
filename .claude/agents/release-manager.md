@@ -3,6 +3,7 @@ name: release-manager
 description: Manages build, commit, and release workflow. Use when the user asks to build, release, tag, or ship changes.
 tools: Read, Bash, Glob, Grep
 model: sonnet
+color: yellow
 maxTurns: 15
 ---
 

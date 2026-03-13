@@ -3,6 +3,7 @@ name: rust-code-reviewer
 description: Expert Rust code reviewer. Use proactively after code changes to check conventions, safety, and tech debt.
 tools: Read, Glob, Grep, Bash
 model: opus
+color: red
 maxTurns: 20
 ---
 

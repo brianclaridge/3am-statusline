@@ -147,7 +147,7 @@ impl StatuslineConfig {
 pub fn load() -> Result<Option<StatuslineConfig>> {
     if let Some(path) = find_config_path() {
         let content = std::fs::read_to_string(&path)?;
-        let config: StatuslineConfig = serde_yaml::from_str(&content)?;
+        let config: StatuslineConfig = serde_yml::from_str(&content)?;
         Ok(Some(config))
     } else {
         Ok(None)
@@ -220,7 +220,7 @@ budget:
   weekly_tokens: 5000000
   monthly_tokens: 20000000
 "#;
-        let config: StatuslineConfig = serde_yaml::from_str(yaml).unwrap();
+        let config: StatuslineConfig = serde_yml::from_str(yaml).unwrap();
         assert_eq!(config.lines.len(), 2);
         assert_eq!(config.meter.width, 10);
         assert_eq!(config.meter.thresholds.yellow, 60.0);
@@ -235,7 +235,7 @@ budget:
 lines:
   - left: "{model.display_name}"
 "#;
-        let config: StatuslineConfig = serde_yaml::from_str(yaml).unwrap();
+        let config: StatuslineConfig = serde_yml::from_str(yaml).unwrap();
         assert_eq!(config.lines.len(), 1);
         assert_eq!(config.lines[0].right, "");
         assert_eq!(config.meter.width, 10); // default
@@ -245,7 +245,7 @@ lines:
     #[test]
     fn deserialize_empty_config() {
         let yaml = "{}";
-        let config: StatuslineConfig = serde_yaml::from_str(yaml).unwrap();
+        let config: StatuslineConfig = serde_yml::from_str(yaml).unwrap();
         assert!(config.lines.is_empty());
         assert!(config.budget.is_none());
     }
@@ -261,7 +261,7 @@ meter:
     yellow: 50
     red: 75
 "##;
-        let config: StatuslineConfig = serde_yaml::from_str(yaml).unwrap();
+        let config: StatuslineConfig = serde_yml::from_str(yaml).unwrap();
         let mc = config.to_meter_config();
         assert_eq!(mc.width, 5);
         assert_eq!(mc.filled, '#');
@@ -281,7 +281,7 @@ lines:
   - left: "L3"
     right: "R3"
 "#;
-        let config: StatuslineConfig = serde_yaml::from_str(yaml).unwrap();
+        let config: StatuslineConfig = serde_yml::from_str(yaml).unwrap();
         let templates = config.line_templates();
         assert_eq!(templates.len(), 3);
         assert_eq!(templates[0], ("L1".into(), "R1".into()));
@@ -327,7 +327,7 @@ events:
     interval: 1h
     capture: false
 "#;
-        let config: StatuslineConfig = serde_yaml::from_str(yaml).unwrap();
+        let config: StatuslineConfig = serde_yml::from_str(yaml).unwrap();
         assert_eq!(config.events.len(), 2);
         assert_eq!(config.events[0].name, "branch");
         assert!(config.events[0].capture);
@@ -338,7 +338,7 @@ events:
     #[test]
     fn events_default_empty() {
         let yaml = "{}";
-        let config: StatuslineConfig = serde_yaml::from_str(yaml).unwrap();
+        let config: StatuslineConfig = serde_yml::from_str(yaml).unwrap();
         assert!(config.events.is_empty());
     }
 }

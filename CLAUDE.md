@@ -95,7 +95,7 @@ Config wires these as event commands at intervals:
 ```yaml
 events:
   - name: git
-    command: "3am-statusline event git"
+    command: "${CLAUDE_PLUGIN_ROOT}/bin/release/3am-statusline event git"
     interval: 5s
     capture: true
 ```
@@ -123,7 +123,7 @@ macOS binaries require building on macOS (no cross-compile from Linux).
 
 - Rust 2021 edition, zero async runtime
 - clap (derive) for CLI subcommand dispatch
-- serde + serde_json + serde_yaml for data
+- serde + serde_json + serde_yml for data
 - chrono + chrono-tz for timestamps and timezone conversion
 - sysinfo for cross-platform CPU/memory stats
 - ureq for blocking HTTP (Claude API status)
