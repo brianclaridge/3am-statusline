@@ -28,7 +28,7 @@ lines:
     right: "{c:dim}resets{/c} {ratelimit.5h_eta|dim}"
   - left: "{meter:ratelimit.7d} {c:green}{rl_7d_green}{/c}{c:1;33}{rl_7d_yellow}{/c}{c:1;31}{rl_7d_red}{/c} weekly"
     right: "{c:dim}resets{/c} {ratelimit.7d_eta|dim}"
-  - left: "{c:green}+{cost.total_lines_added|comma}{/c} {c:red}-{cost.total_lines_removed|comma}{/c} lines [{cost.total_cost_usd|currency|cost}]"
+  - left: "{cost.total_duration_secs|duration|duration} {sep} {c:green}+{cost.total_lines_added|comma}{/c} {c:red}-{cost.total_lines_removed|comma}{/c} lines [{cost.total_cost_usd|currency|cost}]"
     right: "{c:dim}in:{/c} {context_window.total_input_tokens|tokens|value} {sep} {c:dim}out:{/c} {context_window.total_output_tokens|tokens|value}"
   - left: ""
 
@@ -83,6 +83,7 @@ themes:
     branch: "92"     # bright green
     sync: "36"       # cyan
     dirty: "33"      # yellow
+    duration: "2;33"   # dim yellow
     cold: "34"       # blue
     warm: "33"       # yellow
     hot: "31"        # red
@@ -103,6 +104,7 @@ themes:
     branch: neon_green
     sync: electric_blue
     dirty: neon_orange
+    duration: cyber_yellow
     cold: ice_blue
     warm: cyber_yellow
     hot: neon_red
