@@ -30,8 +30,8 @@ pub fn render(percentage: f64, config: &MeterConfig, use_color: bool) -> String 
     let filled_count = filled_count.min(config.width);
     let empty_count = config.width - filled_count;
 
-    let filled: String = std::iter::repeat(config.filled).take(filled_count).collect();
-    let empty: String = std::iter::repeat(config.empty).take(empty_count).collect();
+    let filled: String = std::iter::repeat_n(config.filled, filled_count).collect();
+    let empty: String = std::iter::repeat_n(config.empty, empty_count).collect();
 
     if use_color && filled_count > 0 {
         let color = if pct >= config.threshold_red {

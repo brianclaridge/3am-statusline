@@ -1,7 +1,7 @@
-//! Rate limit data from Anthropic API response headers.
+//! Rate limit data from Anthropic OAuth usage API.
 //!
 //! Reads cached data from `.data/statusline/ratelimits.json` (fast path).
-//! Refreshes cache by calling the API with curl AFTER stdout is flushed.
+//! Refreshes cache by calling the usage endpoint AFTER stdout is flushed.
 
 use std::collections::HashMap;
 use std::path::Path;
@@ -9,9 +9,7 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 
 const CACHE_MAX_AGE_SECS: i64 = 300; // 5 minutes
-const API_URL: &str = "https://api.anthropic.com/v1/messages";
-const QUOTA_BODY: &str = r#"{"model":"claude-haiku-4-5-20251001","max_tokens":1,"messages":[{"role":"user","content":"ok"}]}"#;
-const CLAIMS: &[&str] = &["5h", "7d"];
+const USAGE_URL: &str = "https://api.anthropic.com/api/oauth/usage";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RateLimitCache {
@@ -22,8 +20,23 @@ pub struct RateLimitCache {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ClaimData {
+    /// Utilization as a percentage (0-100).
     pub utilization: f64,
+    /// Unix timestamp when this claim resets.
     pub reset: i64,
+}
+
+/// Response from the OAuth usage API.
+#[derive(Debug, Deserialize)]
+struct UsageResponse {
+    five_hour: Option<UsageClaim>,
+    seven_day: Option<UsageClaim>,
+}
+
+#[derive(Debug, Deserialize)]
+struct UsageClaim {
+    utilization: f64,
+    resets_at: String,
 }
 
 fn cache_path(state_dir: &str) -> std::path::PathBuf {
@@ -53,7 +66,8 @@ pub fn inject_fields(
 ) {
     let now = chrono::Utc::now().timestamp();
     for (claim, data) in &cache.claims {
-        nums.insert(format!("ratelimit.{claim}"), data.utilization * 100.0);
+        // utilization is already a percentage (0-100)
+        nums.insert(format!("ratelimit.{claim}"), data.utilization);
         let eta = (data.reset - now).max(0);
         strings.insert(format!("ratelimit.{claim}_eta"), format_eta(eta));
     }
@@ -75,7 +89,14 @@ fn format_eta(secs: i64) -> String {
     }
 }
 
-/// Refresh the cache by calling the API with curl. Blocks ~500ms.
+/// Parse an ISO 8601 timestamp to a unix epoch.
+fn parse_reset_time(s: &str) -> Option<i64> {
+    chrono::DateTime::parse_from_rfc3339(s)
+        .ok()
+        .map(|dt| dt.timestamp())
+}
+
+/// Refresh the cache by calling the OAuth usage API. Blocks briefly.
 /// Call AFTER stdout is flushed so rendering is not delayed.
 pub fn refresh(state_dir: &str) {
     let token = match read_api_token() {
@@ -83,43 +104,64 @@ pub fn refresh(state_dir: &str) {
         None => return,
     };
 
-    let output = match std::process::Command::new("curl")
-        .args([
-            "-s",
-            "-D-",
-            "-o",
-            "/dev/null",
-            "--max-time",
-            "5",
-            API_URL,
-            "-H",
-            &format!("x-api-key: {token}"),
-            "-H",
-            "anthropic-version: 2023-06-01",
-            "-H",
-            "content-type: application/json",
-            "-d",
-            QUOTA_BODY,
-        ])
-        .output()
+    let body = match ureq::get(USAGE_URL)
+        .header("Authorization", &format!("Bearer {token}"))
+        .header("anthropic-beta", "oauth-2025-04-20")
+        .header("Content-Type", "application/json")
+        .call()
     {
-        Ok(o) => o,
+        Ok(mut r) => match r.body_mut().read_to_string() {
+            Ok(s) => s,
+            Err(_) => return,
+        },
         Err(_) => return,
     };
 
-    let stdout = match String::from_utf8(output.stdout) {
-        Ok(s) => s,
+    let usage: UsageResponse = match serde_json::from_str(&body) {
+        Ok(u) => u,
         Err(_) => return,
     };
 
-    if let Some(cache) = parse_headers(&stdout) {
-        let path = cache_path(state_dir);
-        if let Some(parent) = path.parent() {
-            let _ = std::fs::create_dir_all(parent);
-        }
-        if let Ok(json) = serde_json::to_string_pretty(&cache) {
-            let _ = std::fs::write(path, json);
-        }
+    let mut claims = HashMap::new();
+
+    if let Some(claim) = usage.five_hour {
+        let reset = parse_reset_time(&claim.resets_at).unwrap_or(0);
+        claims.insert(
+            "5h".to_string(),
+            ClaimData {
+                utilization: claim.utilization,
+                reset,
+            },
+        );
+    }
+
+    if let Some(claim) = usage.seven_day {
+        let reset = parse_reset_time(&claim.resets_at).unwrap_or(0);
+        claims.insert(
+            "7d".to_string(),
+            ClaimData {
+                utilization: claim.utilization,
+                reset,
+            },
+        );
+    }
+
+    if claims.is_empty() {
+        return;
+    }
+
+    let cache = RateLimitCache {
+        claims,
+        status: "ok".to_string(),
+        updated_at: chrono::Utc::now().timestamp(),
+    };
+
+    let path = cache_path(state_dir);
+    if let Some(parent) = path.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    if let Ok(json) = serde_json::to_string_pretty(&cache) {
+        let _ = std::fs::write(path, json);
     }
 }
 
@@ -128,58 +170,9 @@ fn read_api_token() -> Option<String> {
     let path = Path::new(&config_dir).join(".credentials.json");
     let content = std::fs::read_to_string(path).ok()?;
     let creds: serde_json::Value = serde_json::from_str(&content).ok()?;
-    creds["claudeAiOauth"]["accessToken"].as_str().map(String::from)
-}
-
-fn parse_headers(raw: &str) -> Option<RateLimitCache> {
-    let mut claims = HashMap::new();
-    let mut status = "allowed".to_string();
-
-    for line in raw.lines() {
-        let line = line.trim();
-
-        if let Some(val) = line.strip_prefix("anthropic-ratelimit-unified-status: ") {
-            status = val.to_string();
-            continue;
-        }
-
-        for &claim in CLAIMS {
-            let util_prefix = format!("anthropic-ratelimit-unified-{claim}-utilization: ");
-            if let Some(val) = line.strip_prefix(&util_prefix) {
-                if let Ok(u) = val.parse::<f64>() {
-                    claims
-                        .entry(claim.to_string())
-                        .or_insert(ClaimData {
-                            utilization: 0.0,
-                            reset: 0,
-                        })
-                        .utilization = u;
-                }
-            }
-            let reset_prefix = format!("anthropic-ratelimit-unified-{claim}-reset: ");
-            if let Some(val) = line.strip_prefix(&reset_prefix) {
-                if let Ok(r) = val.parse::<i64>() {
-                    claims
-                        .entry(claim.to_string())
-                        .or_insert(ClaimData {
-                            utilization: 0.0,
-                            reset: 0,
-                        })
-                        .reset = r;
-                }
-            }
-        }
-    }
-
-    if claims.is_empty() {
-        return None;
-    }
-
-    Some(RateLimitCache {
-        claims,
-        status,
-        updated_at: chrono::Utc::now().timestamp(),
-    })
+    creds["claudeAiOauth"]["accessToken"]
+        .as_str()
+        .map(String::from)
 }
 
 #[cfg(test)]
@@ -187,29 +180,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn parse_real_headers() {
-        let headers = "\
-            HTTP/2 200\r\n\
-            anthropic-ratelimit-unified-status: allowed\r\n\
-            anthropic-ratelimit-unified-5h-status: allowed\r\n\
-            anthropic-ratelimit-unified-5h-reset: 1773288000\r\n\
-            anthropic-ratelimit-unified-5h-utilization: 0.05\r\n\
-            anthropic-ratelimit-unified-7d-status: allowed\r\n\
-            anthropic-ratelimit-unified-7d-reset: 1773374400\r\n\
-            anthropic-ratelimit-unified-7d-utilization: 0.15\r\n";
-        let cache = parse_headers(headers).unwrap();
-        assert_eq!(cache.status, "allowed");
-        assert_eq!(cache.claims.len(), 2);
-        assert!((cache.claims["5h"].utilization - 0.05).abs() < f64::EPSILON);
-        assert_eq!(cache.claims["5h"].reset, 1773288000);
-        assert!((cache.claims["7d"].utilization - 0.15).abs() < f64::EPSILON);
-        assert_eq!(cache.claims["7d"].reset, 1773374400);
+    fn parse_reset_time_iso8601() {
+        let ts = parse_reset_time("2026-03-13T07:00:01.188734+00:00").unwrap();
+        assert!(ts > 0);
     }
 
     #[test]
-    fn parse_missing_claims_returns_none() {
-        let headers = "HTTP/2 200\r\nserver: cloudflare\r\n";
-        assert!(parse_headers(headers).is_none());
+    fn parse_reset_time_invalid() {
+        assert!(parse_reset_time("not-a-date").is_none());
     }
 
     #[test]
@@ -225,13 +203,13 @@ mod tests {
     fn inject_populates_context() {
         let mut cache = RateLimitCache {
             claims: HashMap::new(),
-            status: "allowed".into(),
+            status: "ok".into(),
             updated_at: chrono::Utc::now().timestamp(),
         };
         cache.claims.insert(
             "5h".into(),
             ClaimData {
-                utilization: 0.05,
+                utilization: 5.0,
                 reset: chrono::Utc::now().timestamp() + 3600,
             },
         );
@@ -240,8 +218,26 @@ mod tests {
         let mut strs = HashMap::new();
         inject_fields(&cache, &mut nums, &mut strs);
 
+        // utilization is already a percentage
         assert!((nums["ratelimit.5h"] - 5.0).abs() < f64::EPSILON);
         assert!(strs.contains_key("ratelimit.5h_eta"));
-        assert_eq!(strs["ratelimit.status"], "allowed");
+        assert_eq!(strs["ratelimit.status"], "ok");
+    }
+
+    #[test]
+    fn deserialize_usage_response() {
+        let json = r#"{
+            "five_hour": {"utilization": 1.0, "resets_at": "2026-03-13T07:00:01+00:00"},
+            "seven_day": {"utilization": 23.0, "resets_at": "2026-03-13T04:00:00+00:00"},
+            "seven_day_oauth_apps": null,
+            "seven_day_opus": null,
+            "seven_day_sonnet": {"utilization": 2.0, "resets_at": "2026-03-15T19:00:00+00:00"},
+            "seven_day_cowork": null,
+            "iguana_necktie": null,
+            "extra_usage": {"is_enabled": true, "monthly_limit": 5000, "used_credits": 0.0, "utilization": null}
+        }"#;
+        let resp: UsageResponse = serde_json::from_str(json).unwrap();
+        assert!((resp.five_hour.as_ref().unwrap().utilization - 1.0).abs() < f64::EPSILON);
+        assert!((resp.seven_day.as_ref().unwrap().utilization - 23.0).abs() < f64::EPSILON);
     }
 }

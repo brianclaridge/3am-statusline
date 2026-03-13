@@ -84,9 +84,9 @@ Five sections: `lines`, `meter`, `events`, `budget`, `logging`.
 Timer-based command execution. Built-in event subcommands replace the old Python scripts:
 
 ```text
-3am-statusline event git      # {"branch":"main","sync":"+1/-2","dirty":"3M 1S 2U"}
+3am-statusline event git      # {"branch":"main","sha":"2620eb7","sync":"↑1","dirty":"~3 +1 ?2"}
 3am-statusline event time     # {"pst":"3:45p","mst":"4:45p","cst":"5:45p","est":"6:45p"}
-3am-statusline event sys      # {"cpu":"12%","cores":"8","mem":"4.2/16G (26%)"}
+3am-statusline event sys      # {"cpu":"12%","cores":"8","mem":"4.2/16G (26%)","mem_pct":"26%","mem_used":"4G","mem_total":"16G"}
 3am-statusline event status   # 🟢 ok
 ```
 

@@ -96,7 +96,7 @@ fn render() -> Result<()> {
     }
 
     // Log raw payload before deserialization (fire-and-forget)
-    if let Some(ref json_cfg) = cfg.as_ref().and_then(|c| c.logging.as_ref()).and_then(|l| l.json.as_ref()) {
+    if let Some(json_cfg) = cfg.as_ref().and_then(|c| c.logging.as_ref()).and_then(|l| l.json.as_ref()) {
         let _ = write_log(&input, &json_cfg.dir, json_cfg.keep);
     }
 
@@ -176,7 +176,7 @@ fn render() -> Result<()> {
     let _ = cache_view(&output, &view_cache_path);
 
     // Write compact event log (fire-and-forget, after stdout)
-    if let Some(ref logging) = cfg.as_ref().and_then(|c| c.logging.as_ref()) {
+    if let Some(logging) = cfg.as_ref().and_then(|c| c.logging.as_ref()) {
         let _ = write_event_log(&payload, &context, &strings, &logging.file);
     }
 

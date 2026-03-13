@@ -186,7 +186,7 @@ pub fn pad_line(left: &str, right: &str, width: usize) -> String {
         format!("{left}{truncated_right}")
     } else {
         let gap = width - total;
-        let spaces: String = std::iter::repeat(' ').take(gap).collect();
+        let spaces = " ".repeat(gap);
         format!("{left}{spaces}{right}")
     }
 }

@@ -25,8 +25,8 @@ lines:
   - left: "{meter:ratelimit.7d} {ratelimit.7d|pct|value} weekly"
     right: "{c:dim}resets{/c} {ratelimit.7d_eta|dim}"
   - left: "{c:dim}pst{/c} {c:clock}{event.time.pst}{/c} {c:sep}|{/c} {c:dim}mst{/c} {c:clock}{event.time.mst}{/c} {c:sep}|{/c} {c:dim}cst{/c} {c:clock}{event.time.cst}{/c} {c:sep}|{/c} {c:dim}est{/c} {c:clock}{event.time.est}{/c}"
-    right: "{c:cpu}cpu {event.sys.cpu}{/c} {c:sep}|{/c} {c:mem}mem {event.sys.mem}{/c}"
-  - left: "🌿 {c:branch}{event.git.branch}{/c} {c:sync}{event.git.sync}{/c} {c:sep}|{/c} {c:dirty}{event.git.dirty}{/c}"
+    right: "{c:dim}cpu:{/c} {c:cpu}{event.sys.cpu}{/c} {c:sep}|{/c} {c:dim}mem:{/c} {c:mem}({event.sys.mem_pct}, {event.sys.mem_used}/{event.sys.mem_total}){/c}"
+  - left: "🌿 {c:branch}{event.git.branch}{/c} {c:dim}{event.git.sha}{/c} {c:sync}{event.git.sync}{/c} {c:sep}|{/c} {c:dirty}{event.git.dirty}{/c}"
   - left: ""
 
 theme:
@@ -71,7 +71,3 @@ events:
     command: "${CLAUDE_PLUGIN_ROOT}/bin/release/3am-statusline event git"
     interval: 5s
     capture: true
-
-# budget:
-#   weekly_tokens: 5_000_000
-#   monthly_tokens: 20_000_000

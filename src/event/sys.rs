@@ -7,6 +7,9 @@ struct SysStats {
     cpu: String,
     cores: String,
     mem: String,
+    mem_pct: String,
+    mem_used: String,
+    mem_total: String,
 }
 
 fn gather() -> SysStats {
@@ -40,6 +43,9 @@ fn gather() -> SysStats {
         cpu: format!("{:.0}%", cpu_avg),
         cores: cores.to_string(),
         mem: format!("{used_gb:.1}/{total_gb:.0}G ({used_pct:.0}%)"),
+        mem_pct: format!("{used_pct:.0}%"),
+        mem_used: format!("{used_gb:.0}G"),
+        mem_total: format!("{total_gb:.0}G"),
     }
 }
 

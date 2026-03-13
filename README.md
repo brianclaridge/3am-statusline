@@ -87,9 +87,9 @@ meter:
 The binary includes built-in event subcommands for common data sources:
 
 ```bash
-3am-statusline event git      # branch, ahead/behind, dirty counts (JSON)
+3am-statusline event git      # branch, SHA, ahead/behind, dirty symbols (JSON)
 3am-statusline event time     # world clocks PST/MST/CST/EST (JSON)
-3am-statusline event sys      # CPU/memory stats (JSON)
+3am-statusline event sys      # CPU/memory stats with separate fields (JSON)
 3am-statusline event status   # Claude API status (plain text)
 ```
 
