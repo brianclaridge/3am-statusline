@@ -160,8 +160,11 @@ fn render() -> Result<()> {
     }
 
     // Process color fields: threshold-based coloring for inline values
+    // Also build meter_overrides so {meter:field} uses matching thresholds
+    let mut meter_overrides = HashMap::new();
     if let Some(ref cfg) = cfg {
         for cf in &cfg.color_fields {
+            meter_overrides.insert(cf.source.clone(), (cf.yellow, cf.red));
             if let Some(&val) = context.get(&cf.source) {
                 let formatted = cf.format.as_deref()
                     .map(|f| format::apply(val, f))
@@ -182,8 +185,8 @@ fn render() -> Result<()> {
 
     let mut output = String::new();
     for (i, (left_tpl, right_tpl)) in lines.iter().enumerate() {
-        let left = template::resolve(left_tpl, &context, &strings, &meter_config, use_color, &theme);
-        let right = template::resolve(right_tpl, &context, &strings, &meter_config, use_color, &theme);
+        let left = template::resolve(left_tpl, &context, &strings, &meter_config, use_color, &theme, &meter_overrides);
+        let right = template::resolve(right_tpl, &context, &strings, &meter_config, use_color, &theme, &meter_overrides);
         let line = template::pad_line(&left, &right, width);
         // Preserve blank lines using zero-width space (U+200B)
         // NBSP (U+00A0) gets stripped by JavaScript's trim()

@@ -13,8 +13,6 @@ logging:
 lines:
   - left: ""
   - left: ""
-  - left: "{c:dim}plan:{/c} {c:plan}{plan.slug}{/c}"
-    right: "{c:dim}session:{/c} {c:session}{session_id}{/c}"
   - left: ""
   - left: "{c:model}Claude{/c} {c:model_name}{model.display_name}{/c} {c:sep}|{/c} {c:dim}v{version}{/c} {c:sep}|{/c} {event.claude}"
     right: "{c:green}+{cost.total_lines_added|comma}{/c} {c:red}-{cost.total_lines_removed|comma}{/c} lines [{cost.total_cost_usd|currency|cost}]"
@@ -25,11 +23,13 @@ lines:
   - left: "{meter:ratelimit.7d} {c:green}{rl_7d_green}{/c}{c:1;33}{rl_7d_yellow}{/c}{c:1;31}{rl_7d_red}{/c} weekly"
     right: "{c:dim}resets{/c} {ratelimit.7d_eta|dim}"
   - left: ""
+  - left: "{c:dim}plan:{/c} {c:plan}{plan.slug}{/c}"
+    right: "{c:dim}session:{/c} {c:session}{session_id}{/c}"
   - left: "{c:dim}cwd:{/c} {cwd}"
     right: "{c:dim}cpu:{/c} {c:cpu}{event.sys.cpu}{/c} {c:sep}|{/c} {c:dim}mem:{/c} {c:mem}({event.sys.mem_pct}, {event.sys.mem_used}/{event.sys.mem_total}){/c}"
   - left: "{c:dim}git:{/c} 🌿 {c:branch}{event.git.branch}{/c} {c:dim}{event.git.sha}{/c} {c:sync}{event.git.sync}{/c} {c:dirty}{event.git.dirty}{/c}"
   - left: "{c:dim}pst:{/c} {c:clock}{event.time.pst}{/c} {event.time.pst_icon} {c:sep}|{/c} {c:dim}mst:{/c} {c:clock}{event.time.mst}{/c} {event.time.mst_icon} {c:sep}|{/c} {c:dim}cst:{/c} {c:clock}{event.time.cst}{/c} {event.time.cst_icon} {c:sep}|{/c} {c:dim}est:{/c} {c:clock}{event.time.est}{/c} {event.time.est_icon}"
-  - left: "{c:dim}{event.weather.zip}:{/c} {c:cold}{event.weather.temp_cold}{/c}{c:warm}{event.weather.temp_warm}{/c}{c:hot}{event.weather.temp_hot}{/c} {event.weather.emoji}"
+  - left: "{c:dim}{event.weather.zip}:{/c} {c:cold}{event.weather.temp_cold}{/c}{c:warm}{event.weather.temp_warm}{/c}{c:hot}{event.weather.temp_hot}{/c} {event.weather.emoji} {c:dim}[{event.weather.condition}]{/c}"
   - left: ""
 
 theme:

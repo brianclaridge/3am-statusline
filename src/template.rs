@@ -7,6 +7,9 @@ use crate::meter::{self, MeterConfig};
 
 /// Resolve a template string by replacing `{field}`, `{field|format}`, `{meter:field}`,
 /// `{c:name}`, and `{/c}` tokens.
+///
+/// `meter_overrides` maps field names to `(yellow, red)` threshold pairs that
+/// override the global `meter_config` thresholds for specific meters.
 pub fn resolve(
     template: &str,
     context: &HashMap<String, f64>,
@@ -14,6 +17,7 @@ pub fn resolve(
     meter_config: &MeterConfig,
     use_color: bool,
     theme: &HashMap<String, String>,
+    meter_overrides: &HashMap<String, (f64, f64)>,
 ) -> String {
     let mut result = String::with_capacity(template.len());
     let mut chars = template.chars().peekable();
@@ -37,6 +41,7 @@ pub fn resolve(
                     meter_config,
                     use_color,
                     theme,
+                    meter_overrides,
                 ));
             } else {
                 result.push('{');
@@ -89,6 +94,7 @@ fn resolve_token(
     meter_config: &MeterConfig,
     use_color: bool,
     theme: &HashMap<String, String>,
+    meter_overrides: &HashMap<String, (f64, f64)>,
 ) -> String {
     // {/c} → ANSI reset
     if token == "/c" {
@@ -112,6 +118,14 @@ fn resolve_token(
     // {meter:field.path}
     if let Some(field) = token.strip_prefix("meter:") {
         let pct = context.get(field).copied().unwrap_or(0.0);
+        if let Some(&(yellow, red)) = meter_overrides.get(field) {
+            let cfg = MeterConfig {
+                threshold_yellow: yellow,
+                threshold_red: red,
+                ..*meter_config
+            };
+            return meter::render(pct, &cfg, use_color);
+        }
         return meter::render(pct, meter_config, use_color);
     }
 
@@ -291,6 +305,10 @@ mod tests {
         HashMap::new()
     }
 
+    fn no_overrides() -> HashMap<String, (f64, f64)> {
+        HashMap::new()
+    }
+
     #[test]
     fn plain_field_string() {
         let result = resolve(
@@ -300,6 +318,7 @@ mod tests {
             &empty_meter(),
             false,
             &no_theme(),
+            &no_overrides(),
         );
         assert_eq!(result, "Opus");
     }
@@ -313,6 +332,7 @@ mod tests {
             &empty_meter(),
             false,
             &no_theme(),
+            &no_overrides(),
         );
         assert_eq!(result, "15234");
     }
@@ -326,6 +346,7 @@ mod tests {
             &empty_meter(),
             false,
             &no_theme(),
+            &no_overrides(),
         );
         assert_eq!(result, "$0.55");
     }
@@ -339,6 +360,7 @@ mod tests {
             &empty_meter(),
             false,
             &no_theme(),
+            &no_overrides(),
         );
         assert_eq!(result, "[●●●●●○○○○○]");
     }
@@ -352,6 +374,7 @@ mod tests {
             &empty_meter(),
             false,
             &no_theme(),
+            &no_overrides(),
         );
         assert_eq!(result, "[●●●○○○○○○○] 30% ctx");
     }
@@ -365,6 +388,7 @@ mod tests {
             &empty_meter(),
             false,
             &no_theme(),
+            &no_overrides(),
         );
         assert_eq!(result, "hello !");
     }
@@ -378,6 +402,7 @@ mod tests {
             &empty_meter(),
             false,
             &no_theme(),
+            &no_overrides(),
         );
         assert_eq!(result, "hello {world");
     }
