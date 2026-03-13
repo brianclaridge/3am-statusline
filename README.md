@@ -1,6 +1,6 @@
 # 3am-statusline
 
-A configurable status bar for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) sessions. Displays model info, cost, context usage, rate limits, budget tracking, and custom event data.
+A configurable status bar for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) sessions. Displays model info, cost, context usage, rate limits, and custom event data.
 
 ![3am-statusline screenshot](screenshot.png)
 
@@ -67,6 +67,7 @@ meter:
 | `{field\|color}` | `{model.display_name\|dim}` | dim text |
 | `{meter:field}` | `{meter:context_window.used_percentage}` | `[●●●○○○○○○○]` |
 | `{event.name}` | `{event.branch}` | `main` |
+| `{sep}` | `{sep}` | themed separator (default `\|`) |
 | `{c:name}...{/c}` | `{c:green}ok{/c}` | green "ok" |
 | `{c:code}...{/c}` | `{c:1;33}warn{/c}` | bold yellow "warn" |
 
@@ -78,12 +79,13 @@ meter:
 
 - `model.display_name`, `model.id`
 - `cost.total_cost_usd`, `cost.total_duration_secs`
-- `context_window.used_percentage`, `context_window.total_input_tokens`, `context_window.total_output_tokens`
+- `context_window.used_percentage`, `context_window.total_input_tokens`, `context_window.total_output_tokens`, `context_window.remaining_percentage`, `context_window.context_window_size`
+- `current_usage.input_tokens`, `current_usage.output_tokens`, `current_usage.cache_creation_input_tokens`, `current_usage.cache_read_input_tokens`
 - `session_id`, `version`, `build_version`
 - `vim.mode`, `agent.name`, `worktree.name`
 - `plan.slug`
 - `ratelimit.5h`, `ratelimit.7d`, `ratelimit.5h_eta`, `ratelimit.7d_eta`
-- `budget.weekly_pct`, `budget.monthly_pct`
+- `version.ok`, `version.outdated` (set by `version` event — ✓ or ⇡)
 - `event.{name}` (from custom events)
 
 ## Events
@@ -95,6 +97,7 @@ The binary includes built-in event subcommands for common data sources:
 3am-statusline event time                 # world clocks with day/night emojis (JSON)
 3am-statusline event sys                  # CPU/memory stats with separate fields (JSON)
 3am-statusline event status               # Claude API status (plain text)
+3am-statusline event version              # latest Claude Code version from GitHub (JSON)
 3am-statusline event weather --zip 98101  # current weather from Open-Meteo (JSON)
 ```
 
@@ -145,18 +148,6 @@ Use in templates with color tags:
 ```
 
 The `{c:...}` tag accepts theme names (`green`, `dim`) or raw ANSI codes (`1;33` for bold yellow). Meters (`{meter:field}`) with a matching color field automatically use the same thresholds, so dot colors and text colors stay in sync.
-
-## Budget tracking
-
-Track token usage against weekly/monthly limits:
-
-```yaml
-budget:
-  weekly_tokens: 5_000_000
-  monthly_tokens: 20_000_000
-```
-
-Fields: `{budget.weekly_pct|pct}`, `{budget.monthly_pct|pct}`
 
 ## License
 

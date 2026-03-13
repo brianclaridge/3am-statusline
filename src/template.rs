@@ -96,6 +96,17 @@ fn resolve_token(
     theme: &HashMap<String, String>,
     meter_overrides: &HashMap<String, (f64, f64)>,
 ) -> String {
+    // {sep} → themed separator character
+    if token == "sep" {
+        let ch = theme.get("sep_char").map(|s| s.as_str()).unwrap_or("|");
+        if use_color {
+            if let Some(code) = color_code("sep", theme) {
+                return format!("\x1b[{code}m{ch}\x1b[0m");
+            }
+        }
+        return ch.to_string();
+    }
+
     // {/c} → ANSI reset
     if token == "/c" {
         return if use_color {

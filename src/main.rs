@@ -1,4 +1,3 @@
-mod budget;
 mod config;
 mod event;
 mod events;
@@ -46,6 +45,8 @@ enum EventKind {
     Sys,
     /// Claude API status
     Status,
+    /// Check latest Claude Code version from npm
+    Version,
     /// Current weather conditions
     Weather {
         /// US zip code for location
@@ -64,6 +65,7 @@ fn main() {
                 EventKind::Time => event::time::run(),
                 EventKind::Sys => event::sys::run(),
                 EventKind::Status => event::status::run(),
+                EventKind::Version => event::version::run(),
                 EventKind::Weather { ref zip } => event::weather::run(zip),
             };
             if let Err(e) = result {
@@ -151,11 +153,14 @@ fn render() -> Result<()> {
         events::inject_fields(&event_cache, &mut context, &mut strings);
     }
 
-    // Load budget data if configured
-    let budget_config = cfg.as_ref().and_then(|c| c.budget.as_ref());
-    if let Some(bc) = budget_config {
-        if let Ok(fields) = budget::load_budget(bc, state_dir) {
-            budget::inject_fields(&fields, &mut context);
+    // Version check: compare payload version against latest from event cache
+    if let Some(latest) = strings.get("event.version.latest") {
+        if event::version::is_current(&payload.version, latest) {
+            strings.insert("version.ok".into(), "\u{2713}".into());
+            strings.insert("version.outdated".into(), String::new());
+        } else {
+            strings.insert("version.ok".into(), String::new());
+            strings.insert("version.outdated".into(), "\u{21e1}".into());
         }
     }
 
@@ -209,17 +214,6 @@ fn render() -> Result<()> {
     // Write compact event log (fire-and-forget, after stdout)
     if let Some(logging) = cfg.as_ref().and_then(|c| c.logging.as_ref()) {
         let _ = write_event_log(&payload, &context, &strings, &logging.file);
-    }
-
-    // Persist usage data after stdout flush (fire-and-forget)
-    if budget_config.is_some() {
-        let _ = budget::persist(
-            &payload.session_id,
-            payload.context_window.total_input_tokens,
-            payload.context_window.total_output_tokens,
-            payload.cost.total_cost_usd,
-            state_dir,
-        );
     }
 
     // Fire due events and persist cache (after stdout)
@@ -389,6 +383,12 @@ fn build_context(payload: &StatusPayload) -> (HashMap<String, f64>, HashMap<Stri
     nums.insert("context_window.context_window_size".into(), payload.context_window.context_window_size as f64);
     if let Some(pct) = payload.context_window.remaining_percentage {
         nums.insert("context_window.remaining_percentage".into(), pct);
+    }
+    if let Some(ref cu) = payload.context_window.current_usage {
+        nums.insert("current_usage.input_tokens".into(), cu.input_tokens as f64);
+        nums.insert("current_usage.output_tokens".into(), cu.output_tokens as f64);
+        nums.insert("current_usage.cache_creation_input_tokens".into(), cu.cache_creation_input_tokens as f64);
+        nums.insert("current_usage.cache_read_input_tokens".into(), cu.cache_read_input_tokens as f64);
     }
 
     // Session

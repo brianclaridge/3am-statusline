@@ -76,9 +76,7 @@ Notable stabilizations relevant to this project:
 
 | Item | Location | Issue |
 | --- | --- | --- |
-| Deprecated `Duration` | `budget.rs:194` | Use `TimeDelta::weeks(5)` instead |
 | `curl` subprocess | `ratelimit.rs:86` | Replace with `ureq` (already a dep) |
-| `&PathBuf` params | `budget.rs:120,131,140` | Change to `&Path` |
 | `#[allow(dead_code)]` | `config.rs:54` | `ThresholdConfig.green` read by serde but unused in logic |
 | `set_var` in tests | `config.rs:302` | Migrate to `temp_env` crate |
 | Shell wrapper for events | `events.rs:119` | Consider `Command::new` for built-in event commands |

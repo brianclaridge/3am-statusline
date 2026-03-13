@@ -13,7 +13,6 @@ pub struct StatuslineConfig {
     pub meter: MeterYaml,
     #[serde(default)]
     pub theme: std::collections::HashMap<String, String>,
-    pub budget: Option<BudgetConfig>,
     pub state: Option<StateConfig>,
     pub logging: Option<LoggingConfig>,
     #[serde(default)]
@@ -71,14 +70,6 @@ impl Default for ThresholdConfig {
             red: default_red(),
         }
     }
-}
-
-#[derive(Debug, Deserialize)]
-pub struct BudgetConfig {
-    #[serde(default)]
-    pub weekly_tokens: u64,
-    #[serde(default)]
-    pub monthly_tokens: u64,
 }
 
 #[derive(Debug, Deserialize)]
@@ -232,18 +223,11 @@ meter:
     green: 0
     yellow: 60
     red: 85
-
-budget:
-  weekly_tokens: 5000000
-  monthly_tokens: 20000000
 "#;
         let config: StatuslineConfig = serde_yml::from_str(yaml).unwrap();
         assert_eq!(config.lines.len(), 2);
         assert_eq!(config.meter.width, 10);
         assert_eq!(config.meter.thresholds.yellow, 60.0);
-        let budget = config.budget.unwrap();
-        assert_eq!(budget.weekly_tokens, 5_000_000);
-        assert_eq!(budget.monthly_tokens, 20_000_000);
     }
 
     #[test]
@@ -256,7 +240,6 @@ lines:
         assert_eq!(config.lines.len(), 1);
         assert_eq!(config.lines[0].right, "");
         assert_eq!(config.meter.width, 10); // default
-        assert!(config.budget.is_none());
     }
 
     #[test]
@@ -264,7 +247,6 @@ lines:
         let yaml = "{}";
         let config: StatuslineConfig = serde_yml::from_str(yaml).unwrap();
         assert!(config.lines.is_empty());
-        assert!(config.budget.is_none());
     }
 
     #[test]

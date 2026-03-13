@@ -26,12 +26,12 @@ src/
     time.rs     # World clock with chrono-tz (JSON)
     sys.rs      # CPU/mem via sysinfo crate (JSON)
     status.rs   # Claude API status via ureq (plain text)
+    version.rs  # Latest Claude Code version check via GitHub releases (JSON)
     weather.rs  # Weather via Open-Meteo + Zippopotam.us geocoding (JSON)
   events.rs     # Timer-based event system (shell commands at intervals)
   payload.rs    # Serde types for Claude Code JSON schema
   template.rs   # Template parser: {field}, {field|format}, {meter:field}
   meter.rs      # Meter rendering with ANSI colors
-  budget.rs     # JSONL persistence, weekly/monthly aggregation
   format.rs     # Format specifiers (currency, pct, duration, tokens, comma)
   ratelimit.rs  # Anthropic API rate limit cache
 ```
@@ -50,7 +50,7 @@ bin/release/        # Pre-built binaries per platform
 
 ## Config (`statusline.yml`)
 
-Six sections: `lines`, `meter`, `color_fields`, `events`, `budget`, `logging`.
+Five sections: `lines`, `meter`, `color_fields`, `events`, `logging`.
 
 ### Config search order
 
@@ -69,6 +69,8 @@ Six sections: `lines`, `meter`, `color_fields`, `events`, `budget`, `logging`.
 | `{field.path\|color}` | `{model.display_name\|dim}` | dim text |
 | `{meter:field.path}` | `{meter:context_window.used_percentage}` | `[###-------]` |
 | `{event.name}` | `{event.branch}` | `main` |
+| `{current_usage.field}` | `{current_usage.cache_read_input_tokens\|tokens}` | `130K` |
+| `{sep}` | `{sep}` | themed separator (default `\|`) |
 
 ### Format specifiers
 
@@ -89,6 +91,7 @@ Timer-based command execution. Built-in event subcommands replace the old Python
 3am-statusline event time     # {"pst":"3:45","pst_icon":"☀️","mst":"5:45","mst_icon":"🌅",...}
 3am-statusline event sys      # {"cpu":"12%","cores":"8","mem":"4.2/16G (26%)","mem_pct":"26%","mem_used":"4G","mem_total":"16G"}
 3am-statusline event status   # 🟢 ok
+3am-statusline event version  # {"latest":"2.1.74"}
 3am-statusline event weather --zip 98101  # {"emoji":"🌧️","temp":"39°F","condition":"drizzle"}
 ```
 
