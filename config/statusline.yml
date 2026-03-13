@@ -56,19 +56,19 @@ meter:
 
 events:
   - name: claude
-    command: "uv run scripts/status.py"
+    command: "3am-statusline event status"
     interval: 30s
     capture: true
   - name: sys
-    command: "uv run scripts/system.py"
+    command: "3am-statusline event sys"
     interval: 3s
     capture: true
   - name: time
-    command: "uv run scripts/time.py"
+    command: "3am-statusline event time"
     interval: 5s
     capture: true
   - name: git
-    command: "uv run scripts/git_status.py"
+    command: "3am-statusline event git"
     interval: 5s
     capture: true
 

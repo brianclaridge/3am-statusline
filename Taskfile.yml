@@ -65,13 +65,13 @@ tasks:
   time:
     desc: Show world clocks
     cmds:
-      - uv run scripts/time.py PST MST CST EST
+      - ./bin/target/debug/3am-statusline event time
     silent: true
 
   status:
     desc: Check Claude API status
     cmds:
-      - uv run scripts/status.py
+      - ./bin/target/debug/3am-statusline event status
     silent: true
 
   release:

@@ -4,11 +4,21 @@ A configurable status bar for [Claude Code](https://docs.anthropic.com/en/docs/c
 
 ## Install
 
+### As a Claude Code plugin (recommended)
+
 ```bash
-curl -fsSL https://raw.githubusercontent.com/brianclaridge/3am-statusline/main/install.sh | bash
+claude plugin add 3am-statusline
 ```
 
-Or clone and build from source:
+Then run the setup skill:
+
+```
+/3am-statusline:setup
+```
+
+This detects your platform, wires the correct binary into your Claude Code settings, and copies the default config.
+
+### From source
 
 ```bash
 git clone https://github.com/brianclaridge/3am-statusline.git
@@ -16,17 +26,11 @@ cd 3am-statusline
 task build
 ```
 
-## Setup
-
-Add to your project's `.claude/settings.json`:
+Then point your `.claude/settings.json` at the binary:
 
 ```json
 {
-  "statusLine": {
-    "type": "command",
-    "command": "node /path/to/3am-statusline/shim.js",
-    "padding": 1
-  }
+  "statusLine": "/path/to/3am-statusline/bin/release/3am-statusline-linux-x64"
 }
 ```
 
@@ -79,22 +83,39 @@ meter:
 
 ## Events
 
-Run shell commands at intervals and inject their output into the statusline:
+The binary includes built-in event subcommands for common data sources:
+
+```bash
+3am-statusline event git      # branch, ahead/behind, dirty counts (JSON)
+3am-statusline event time     # world clocks PST/MST/CST/EST (JSON)
+3am-statusline event sys      # CPU/memory stats (JSON)
+3am-statusline event status   # Claude API status (plain text)
+```
+
+Wire them into your config:
 
 ```yaml
 events:
-  - name: branch
-    command: "git rev-parse --abbrev-ref HEAD 2>/dev/null"
-    interval: 10s
+  - name: git
+    command: "3am-statusline event git"
+    interval: 5s
     capture: true
+  - name: sys
+    command: "3am-statusline event sys"
+    interval: 3s
+    capture: true
+```
 
+You can also run arbitrary shell commands:
+
+```yaml
   - name: disk
     command: "df -h / | tail -1 | awk '{print $5}'"
     interval: 5m
     capture: true
 ```
 
-Use in templates: `{event.branch|dim}`, `{event.disk|yellow}`
+Use in templates: `{event.git.branch}`, `{event.sys.cpu}`, `{event.disk}`
 
 ## Budget tracking
 

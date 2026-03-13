@@ -1,5 +1,6 @@
 mod budget;
 mod config;
+mod event;
 mod events;
 mod format;
 mod meter;
@@ -12,25 +13,71 @@ use std::io::Read;
 
 use anyhow::{Context, Result};
 use chrono::Utc;
+use clap::{Parser, Subcommand};
 
 use payload::StatusPayload;
 
 const VERSION: &str = env!("BUILD_VERSION");
 const DEFAULT_STATE_DIR: &str = ".data/statusline";
 
+#[derive(Parser)]
+#[command(name = "3am-statusline", about = "Configurable status display for Claude Code")]
+struct Cli {
+    #[command(subcommand)]
+    command: Option<Commands>,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Run an event subcommand
+    Event {
+        #[command(subcommand)]
+        kind: EventKind,
+    },
+}
+
+#[derive(Subcommand)]
+enum EventKind {
+    /// Git branch, ahead/behind, dirty counts
+    Git,
+    /// World clock times
+    Time,
+    /// CPU/memory stats
+    Sys,
+    /// Claude API status
+    Status,
+}
+
 fn main() {
-    if let Err(e) = run() {
-        // On any error, try to serve the cached view
-        let view_path = format!("{DEFAULT_STATE_DIR}/last_view.txt");
-        if let Ok(cached) = std::fs::read_to_string(&view_path) {
-            print!("{cached}");
+    let cli = Cli::parse();
+
+    match cli.command {
+        Some(Commands::Event { kind }) => {
+            let result = match kind {
+                EventKind::Git => event::git::run(),
+                EventKind::Time => event::time::run(),
+                EventKind::Sys => event::sys::run(),
+                EventKind::Status => event::status::run(),
+            };
+            if let Err(e) = result {
+                eprintln!("statusline: {e:#}");
+                std::process::exit(1);
+            }
         }
-        eprintln!("statusline: {e:#}");
-        std::process::exit(1);
+        None => {
+            if let Err(e) = render() {
+                let view_path = format!("{DEFAULT_STATE_DIR}/last_view.txt");
+                if let Ok(cached) = std::fs::read_to_string(&view_path) {
+                    print!("{cached}");
+                }
+                eprintln!("statusline: {e:#}");
+                std::process::exit(1);
+            }
+        }
     }
 }
 
-fn run() -> Result<()> {
+fn render() -> Result<()> {
     let mut input = String::new();
     std::io::stdin()
         .read_to_string(&mut input)

@@ -8,16 +8,24 @@ Standalone Rust binary that renders a configurable status display for Claude Cod
 | -------- | --------- |
 | Build all platforms | `task build` |
 | Run tests | `task test` |
-| Test manually | `echo '{}' \| ./bin/target/debug/3am-statusline` |
-| Config file | `.claude/statusline.yml` |
+| Test render | `echo '{}' \| ./bin/target/debug/3am-statusline` |
+| Test events | `./bin/target/debug/3am-statusline event git` |
+| Config file | `config/statusline.yml` |
 | Cache dir | `.data/statusline/` |
+| Plugin manifest | `.claude-plugin/plugin.json` |
 
 ## Architecture
 
 ```text
 src/
-  main.rs       # stdin -> config -> log -> render -> stdout -> events -> persist
+  main.rs       # clap CLI dispatch: default render or event subcommands
   config.rs     # YAML parsing, config discovery, defaults
+  event/        # Built-in event subcommands (replace Python scripts)
+    mod.rs      # Module declarations
+    git.rs      # Branch, ahead/behind, dirty counts (JSON)
+    time.rs     # World clock with chrono-tz (JSON)
+    sys.rs      # CPU/mem via sysinfo crate (JSON)
+    status.rs   # Claude API status via ureq (plain text)
   events.rs     # Timer-based event system (shell commands at intervals)
   payload.rs    # Serde types for Claude Code JSON schema
   template.rs   # Template parser: {field}, {field|format}, {meter:field}
@@ -25,6 +33,17 @@ src/
   budget.rs     # JSONL persistence, weekly/monthly aggregation
   format.rs     # Format specifiers (currency, pct, duration, tokens, comma)
   ratelimit.rs  # Anthropic API rate limit cache
+```
+
+## Plugin structure
+
+```text
+.claude-plugin/
+  plugin.json       # Plugin manifest (name, version, skills path)
+skills/
+  setup/
+    SKILL.md        # /3am-statusline:setup — platform detection + settings wiring
+bin/release/        # Pre-built binaries per platform
 ```
 
 ## Config (`statusline.yml`)
@@ -61,13 +80,22 @@ Five sections: `lines`, `meter`, `events`, `budget`, `logging`.
 
 ## Events
 
-Timer-based shell command execution. Runs commands at configurable intervals, caches stdout, injects into templates as `{event.name}`.
+Timer-based command execution. Built-in event subcommands replace the old Python scripts:
+
+```text
+3am-statusline event git      # {"branch":"main","sync":"+1/-2","dirty":"3M 1S 2U"}
+3am-statusline event time     # {"pst":"3:45p","mst":"4:45p","cst":"5:45p","est":"6:45p"}
+3am-statusline event sys      # {"cpu":"12%","cores":"8","mem":"4.2/16G (26%)"}
+3am-statusline event status   # 🟢 ok
+```
+
+Config wires these as event commands at intervals:
 
 ```yaml
 events:
-  - name: branch
-    command: "git rev-parse --abbrev-ref HEAD 2>/dev/null"
-    interval: 10s
+  - name: git
+    command: "3am-statusline event git"
+    interval: 5s
     capture: true
 ```
 
@@ -93,7 +121,10 @@ macOS binaries require building on macOS (no cross-compile from Linux).
 ## Stack
 
 - Rust 2021 edition, zero async runtime
+- clap (derive) for CLI subcommand dispatch
 - serde + serde_json + serde_yaml for data
-- chrono for timestamps
+- chrono + chrono-tz for timestamps and timezone conversion
+- sysinfo for cross-platform CPU/memory stats
+- ureq for blocking HTTP (Claude API status)
 - anyhow for errors
 - Raw ANSI escape codes (no colored crate)
