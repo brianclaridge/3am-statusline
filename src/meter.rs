@@ -1,5 +1,3 @@
-use std::io::IsTerminal;
-
 pub struct MeterConfig {
     pub width: usize,
     pub filled: char,
@@ -50,15 +48,14 @@ pub fn render(percentage: f64, config: &MeterConfig, use_color: bool) -> String 
 }
 
 /// Determine if ANSI color should be used.
-/// Respects NO_COLOR/FORCE_COLOR conventions, falls back to TTY detection.
+/// Respects NO_COLOR convention. Defaults to enabled because statusline output
+/// is rendered by Claude Code in a terminal with ANSI support — stdout is piped,
+/// so is_terminal() would incorrectly return false.
 pub fn should_use_color() -> bool {
     if std::env::var_os("NO_COLOR").is_some() {
         return false;
     }
-    if std::env::var_os("FORCE_COLOR").is_some() {
-        return true;
-    }
-    std::io::stdout().is_terminal()
+    true
 }
 
 #[cfg(test)]

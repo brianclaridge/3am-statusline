@@ -2,6 +2,19 @@
 
 Project-specific Rust patterns derived from the codebase. Follow these when writing or modifying Rust code.
 
+## Toolchain: Rust 1.94.0 (2026-03-05)
+
+Notable stabilizations relevant to this project:
+
+| Feature | Use case |
+| --- | --- |
+| `<[T]>::array_windows` | Const-length sliding window on slices — prefer over `.windows(N)` when N is known at compile time |
+| `Peekable::next_if_map` | Conditional consume + transform — useful for template/parser code |
+| `LazyLock::get` / `LazyCell::get` | Inspect lazy-initialized values without forcing — useful if we adopt lazy statics |
+| Cargo `include` key | Split `.cargo/config.toml` into shared + per-target files for cross-compile |
+| Closure capturing changes | Closures now capture partial variables more precisely — may surface new borrow checker errors in closures that previously moved entire structs |
+| TOML v1.1 in Cargo | `Cargo.toml` supports inline tables, new escape sequences — raises MSRV if used |
+
 ## Error handling
 
 - `anyhow::Result` for all fallible functions, `.context()` for meaningful error chains
@@ -49,8 +62,7 @@ Project-specific Rust patterns derived from the codebase. Follow these when writ
 
 - `#[cfg(windows)]` / `#[cfg(not(windows))]` for shell dispatch (`cmd /C` vs `sh -c`)
 - `Path::join()` for path construction, never string concatenation with `/`
-- `std::io::IsTerminal` for TTY detection (replaces `atty`)
-- `NO_COLOR` / `FORCE_COLOR` env var conventions respected
+- Color defaults to enabled — stdout is piped by Claude Code, so `is_terminal()` is wrong; only `NO_COLOR` env var disables color
 
 ## Testing
 
