@@ -25,11 +25,11 @@ lines:
   - left: "{meter:context_window.used_percentage} {c:green}{ctx_pct_green}{/c}{c:1;33}{ctx_pct_yellow}{/c}{c:1;31}{ctx_pct_red}{/c} ctx"
     right: "{c:value}{current_usage.total|tokens}{/c} {c:dim}/{/c} {c:value}{context_window.context_window_size|tokens}{/c}"
   - left: "{meter:ratelimit.5h} {c:green}{rl_5h_green}{/c}{c:1;33}{rl_5h_yellow}{/c}{c:1;31}{rl_5h_red}{/c} session"
-    right: "{c:dim}resets{/c} {ratelimit.5h_eta|dim}"
+    right: "{c:dim}resets{/c} {ratelimit.5h_eta|reset}"
   - left: "{meter:ratelimit.7d} {c:green}{rl_7d_green}{/c}{c:1;33}{rl_7d_yellow}{/c}{c:1;31}{rl_7d_red}{/c} weekly"
-    right: "{c:dim}resets{/c} {ratelimit.7d_eta|dim}"
+    right: "{c:dim}resets{/c} {ratelimit.7d_eta|reset}"
   - left: "{cost.total_duration_secs|duration|duration} {sep} {c:green}+{cost.total_lines_added|comma}{/c} {c:red}-{cost.total_lines_removed|comma}{/c} lines [{cost.total_cost_usd|currency|cost}]"
-    right: "{c:dim}in:{/c} {context_window.total_input_tokens|tokens|value} {sep} {c:dim}out:{/c} {context_window.total_output_tokens|tokens|value}"
+    right: "{c:dim}total in:{/c} {context_window.total_input_tokens|tokens|value} {sep} {c:dim}out:{/c} {context_window.total_output_tokens|tokens|value}"
   - left: ""
 
   - left: "{c:dim}plan:{/c} {c:plan}{plan.slug}{/c}"
@@ -84,6 +84,7 @@ themes:
     sync: "36"       # cyan
     dirty: "33"      # yellow
     duration: "2;33"   # dim yellow
+    reset: "2;32"      # dim green
     cold: "34"       # blue
     warm: "33"       # yellow
     hot: "31"        # red
@@ -105,6 +106,7 @@ themes:
     sync: electric_blue
     dirty: neon_orange
     duration: cyber_yellow
+    reset: neon_green
     cold: ice_blue
     warm: cyber_yellow
     hot: neon_red
