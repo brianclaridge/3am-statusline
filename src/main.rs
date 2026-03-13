@@ -46,6 +46,12 @@ enum EventKind {
     Sys,
     /// Claude API status
     Status,
+    /// Current weather conditions
+    Weather {
+        /// US zip code for location
+        #[arg(long)]
+        zip: String,
+    },
 }
 
 fn main() {
@@ -58,6 +64,7 @@ fn main() {
                 EventKind::Time => event::time::run(),
                 EventKind::Sys => event::sys::run(),
                 EventKind::Status => event::status::run(),
+                EventKind::Weather { ref zip } => event::weather::run(zip),
             };
             if let Err(e) = result {
                 eprintln!("statusline: {e:#}");

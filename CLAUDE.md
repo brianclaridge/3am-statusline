@@ -26,6 +26,7 @@ src/
     time.rs     # World clock with chrono-tz (JSON)
     sys.rs      # CPU/mem via sysinfo crate (JSON)
     status.rs   # Claude API status via ureq (plain text)
+    weather.rs  # Weather via Open-Meteo + Zippopotam.us geocoding (JSON)
   events.rs     # Timer-based event system (shell commands at intervals)
   payload.rs    # Serde types for Claude Code JSON schema
   template.rs   # Template parser: {field}, {field|format}, {meter:field}
@@ -85,9 +86,10 @@ Timer-based command execution. Built-in event subcommands replace the old Python
 
 ```text
 3am-statusline event git      # {"branch":"main","sha":"2620eb7","sync":"↑1","dirty":"~3 +1 ?2"}
-3am-statusline event time     # {"pst":"3:45p","mst":"4:45p","cst":"5:45p","est":"6:45p"}
+3am-statusline event time     # {"pst":"3:45","pst_icon":"☀️","mst":"5:45","mst_icon":"🌅",...}
 3am-statusline event sys      # {"cpu":"12%","cores":"8","mem":"4.2/16G (26%)","mem_pct":"26%","mem_used":"4G","mem_total":"16G"}
 3am-statusline event status   # 🟢 ok
+3am-statusline event weather --zip 98101  # {"emoji":"🌧️","temp":"39°F","condition":"drizzle"}
 ```
 
 Config wires these as event commands at intervals:
@@ -126,6 +128,6 @@ macOS binaries require building on macOS (no cross-compile from Linux).
 - serde + serde_json + serde_yml for data
 - chrono + chrono-tz for timestamps and timezone conversion
 - sysinfo for cross-platform CPU/memory stats
-- ureq for blocking HTTP (Claude API status)
+- ureq for blocking HTTP (Claude API status, Open-Meteo weather, Zippopotam.us geocoding)
 - anyhow for errors
 - Raw ANSI escape codes (no colored crate)

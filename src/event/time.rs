@@ -19,15 +19,23 @@ const ZONES: &[(&str, &str)] = &[
 
 const DEFAULT_ZONES: &[&str] = &["PST", "MST", "CST", "EST"];
 
-fn format_time(tz: Tz) -> String {
+fn time_emoji(hour: u32) -> &'static str {
+    match hour {
+        6..=17 => "\u{2600}\u{fe0f}",  // ☀️
+        18..=20 => "\u{1f305}",         // 🌅
+        _ => "\u{1f319}",               // 🌙
+    }
+}
+
+fn format_time(tz: Tz) -> (String, String) {
     let now = Utc::now().with_timezone(&tz);
     let h = {
         let h12 = now.format("%I").to_string().trim_start_matches('0').to_string();
         if h12.is_empty() { "12".to_string() } else { h12 }
     };
     let m = now.format("%M").to_string();
-    let ap = if now.format("%p").to_string() == "AM" { "a" } else { "p" };
-    format!("{h}:{m}{ap}")
+    let emoji = time_emoji(now.format("%H").to_string().parse::<u32>().unwrap_or(0));
+    (format!("{h}:{m}"), emoji.to_string())
 }
 
 fn resolve_tz(label: &str) -> Option<Tz> {
@@ -44,10 +52,11 @@ pub fn run() -> Result<()> {
     let mut data = BTreeMap::new();
     for zone in DEFAULT_ZONES {
         let key = zone.to_lowercase();
-        let val = resolve_tz(zone)
+        let (time, icon) = resolve_tz(zone)
             .map(format_time)
-            .unwrap_or_else(|| "???".to_string());
-        data.insert(key, val);
+            .unwrap_or_else(|| ("???".to_string(), "".to_string()));
+        data.insert(key.clone(), time);
+        data.insert(format!("{key}_icon"), icon);
     }
     println!("{}", serde_json::to_string(&data)?);
     Ok(())

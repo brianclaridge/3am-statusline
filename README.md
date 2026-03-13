@@ -87,10 +87,11 @@ meter:
 The binary includes built-in event subcommands for common data sources:
 
 ```bash
-3am-statusline event git      # branch, SHA, ahead/behind, dirty symbols (JSON)
-3am-statusline event time     # world clocks PST/MST/CST/EST (JSON)
-3am-statusline event sys      # CPU/memory stats with separate fields (JSON)
-3am-statusline event status   # Claude API status (plain text)
+3am-statusline event git                  # branch, SHA, ahead/behind, dirty symbols (JSON)
+3am-statusline event time                 # world clocks with day/night emojis (JSON)
+3am-statusline event sys                  # CPU/memory stats with separate fields (JSON)
+3am-statusline event status               # Claude API status (plain text)
+3am-statusline event weather --zip 98101  # current weather from Open-Meteo (JSON)
 ```
 
 Wire them into your config:
@@ -116,7 +117,9 @@ You can also run arbitrary shell commands:
     capture: true
 ```
 
-Use in templates: `{event.git.branch}`, `{event.sys.cpu}`, `{event.disk}`
+Weather uses [Open-Meteo](https://open-meteo.com/) (free, no API key). Zip code is geocoded via Zippopotam.us and cached permanently in `.data/statusline/geocode.json`.
+
+Use in templates: `{event.git.branch}`, `{event.sys.cpu}`, `{event.weather.emoji}`, `{event.weather.temp}`, `{event.disk}`
 
 ## Budget tracking
 
