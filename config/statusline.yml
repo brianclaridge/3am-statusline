@@ -10,7 +10,7 @@ lines:
   - left: ""
   - left: "{c:dim}session:{/c} {c:session}{session_id}{/c}"
     right: "{c:plan}{plan.slug}{/c}"
-  - left: "{c:model}{model.display_name}{/c}"
+  - left: "{c:model}{model.display_name}{/c} {c:dim}v{version}{/c}"
     right: "{cost.total_cost_usd|currency|cost}"
   - left: "{meter:context_window.used_percentage} {context_window.used_percentage|pct|value} ctx"
     right: "{context_window.total_input_tokens|tokens|value} tok"
@@ -49,27 +49,27 @@ meter:
 events:
   - name: claude
     command: "uv run scripts/status.py"
-    interval: 5m
+    interval: 30s
     capture: true
   - name: cpu
     command: "top -bn1 | awk '/^%Cpu/{printf \"%.0f%%\", 100-$8}'"
-    interval: 10s
+    interval: 3s
     capture: true
   - name: pst
     command: "uv run scripts/time.py PST"
-    interval: 30s
+    interval: 5s
     capture: true
   - name: mst
     command: "uv run scripts/time.py MST"
-    interval: 30s
+    interval: 5s
     capture: true
   - name: cst
     command: "uv run scripts/time.py CST"
-    interval: 30s
+    interval: 5s
     capture: true
   - name: est
     command: "uv run scripts/time.py EST"
-    interval: 30s
+    interval: 5s
     capture: true
 
 # budget:
