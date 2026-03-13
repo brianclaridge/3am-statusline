@@ -98,7 +98,7 @@ fn resolve_token(
 ) -> String {
     // {sep} → themed separator character
     if token == "sep" {
-        let ch = theme.get("sep_char").map(|s| s.as_str()).unwrap_or("|");
+        let ch = theme.get("separator").map(|s| s.as_str()).unwrap_or("|");
         if use_color {
             if let Some(code) = color_code("sep", theme) {
                 return format!("\x1b[{code}m{ch}\x1b[0m");

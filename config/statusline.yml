@@ -1,15 +1,23 @@
-# Example 3am-statusline config
-# Copy to .claude/statusline.yml in your project root
+# 3am-statusline config
+# Copy to config/statusline.yml or .claude/statusline.yml in your project root
+# All values shown are defaults unless noted otherwise
 
+# Terminal width for line padding (default: COLUMNS env var, then 80)
+columns: 100
+
+# State directory for caches and event data
 state:
-  dir: ".data/statusline"
+  dir: ".data/statusline"              # default: .data/statusline
 
+# Logging
 logging:
-  file: ".data/statusline/statusline.log"
+  file: ".data/statusline/statusline.log"  # default: .data/statusline/statusline.log
   json:
-    dir: ".data/statusline/json"
-    keep: 15
+    dir: ".data/statusline/json"       # default: .data/statusline/json (raw payload dumps)
+    keep: 15                           # default: 50 (max JSON log files to retain)
 
+# Layout — each line has left and right template strings
+# Empty left/right renders as a blank line (zero-width space preserved)
 lines:
   - left: ""
   - left: ""
@@ -34,41 +42,50 @@ lines:
   - left: "{c:dim}{event.weather.zip}:{/c} {c:cold}{event.weather.temp_cold}{/c}{c:warm}{event.weather.temp_warm}{/c}{c:hot}{event.weather.temp_hot}{/c} {c:dim}[{event.weather.condition}]{/c} {event.weather.emoji}"
   - left: ""
 
+# Theme — maps color names to ANSI codes for {c:name}...{/c} tags
+# Built-in names (no theme entry needed): red, green, yellow, blue, magenta,
+# cyan, white, dim, bold, bright_red, bright_green, bright_yellow, bright_blue,
+# bright_magenta, bright_cyan
 theme:
-  model: "1"        # bold
+  separator: "~"   # character rendered by {sep} token (default: |)
+  sep: "2"         # ANSI code for {sep} color (default: dim)
+  model: "1"       # bold
   model_name: "1;36" # bold cyan
-  cost: "32"        # green
-  value: "36"       # cyan
-  session: "34"     # blue
-  plan: "33"        # yellow
-  dim: "2"          # dim
-  clock: "35"       # magenta
-  cpu: "33"         # yellow
-  mem: "35"         # magenta
-  api: "36"         # cyan
-  sep: "2"          # dim
-  branch: "92"      # bright green
-  sync: "36"        # cyan
-  dirty: "33"       # yellow
-  cold: "34"        # blue
-  warm: "33"        # yellow
-  hot: "31"         # red
+  cost: "32"       # green
+  value: "36"      # cyan
+  session: "34"    # blue
+  plan: "33"       # yellow
+  dim: "2"         # dim
+  clock: "35"      # magenta
+  cpu: "33"        # yellow
+  mem: "35"        # magenta
+  api: "36"        # cyan
+  branch: "92"     # bright green
+  sync: "36"       # cyan
+  dirty: "33"      # yellow
+  cold: "34"       # blue
+  warm: "33"       # yellow
+  hot: "31"        # red
 
+# Meter — visual bar for {meter:field} tokens
 meter:
-  width: 10
-  filled: "●"
-  empty: "○"
+  width: 10        # default: 10 (number of dots)
+  filled: "●"      # default: ●
+  empty: "○"       # default: ○
   thresholds:
-    green: 0
-    yellow: 60
-    red: 85
+    green: 0       # default: 0 (below yellow = green)
+    yellow: 60     # default: 60
+    red: 85        # default: 85
 
+# Color fields — threshold-based coloring for inline values
+# Generates {name_green}, {name_yellow}, {name_red} — only active tier is populated
+# Also syncs {meter:source} dot colors to match
 color_fields:
   - name: ctx_pct
     source: "context_window.used_percentage"
     format: "pct"
-    yellow: 40
-    red: 60
+    yellow: 40     # default: 40
+    red: 60        # default: 60
   - name: rl_5h
     source: "ratelimit.5h"
     format: "pct"
@@ -80,6 +97,8 @@ color_fields:
     yellow: 40
     red: 60
 
+# Events — timer-based commands whose stdout is injected as template fields
+# capture: true = block and capture stdout; false = fire-and-forget
 events:
   - name: claude
     command: "${CLAUDE_PLUGIN_ROOT}/bin/release/3am-statusline event status"

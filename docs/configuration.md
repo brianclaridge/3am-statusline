@@ -51,7 +51,7 @@ theme:
   model_name: "1;36" # bold cyan
   dim: "2"
   sep: "2"           # dim separator
-  sep_char: "|"      # separator character (default |)
+  separator: "|"     # separator character (default |)
 ```
 
 ### Columns
