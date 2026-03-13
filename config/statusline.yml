@@ -24,48 +24,93 @@ lines:
   - left: ""
   - left: "{c:model}Claude{/c} {c:model_name}{model.display_name}{/c} {sep} {c:dim}v{version}{/c} {c:green}{version.ok}{/c}{c:1;33}{version.outdated}{/c} {sep} {event.claude}"
     right: "{c:green}+{cost.total_lines_added|comma}{/c} {c:red}-{cost.total_lines_removed|comma}{/c} lines [{cost.total_cost_usd|currency|cost}]"
-  - left: "{meter:context_window.used_percentage} {c:green}{ctx_pct_green}{/c}{c:1;33}{ctx_pct_yellow}{/c}{c:1;31}{ctx_pct_red}{/c} ctx"
+  - left: "{meter:context_window.used_percentage} {c:green}{ctx_pct_green}{/c}{c:1;33}{ctx_pct_yellow}{/c}{c:1;31}{ctx_pct_red}{/c} ctx ({context_window.context_window_size|tokens})"
     right: "{c:dim}in:{/c} {context_window.total_input_tokens|tokens|value} {sep} {c:dim}out:{/c} {context_window.total_output_tokens|tokens|value}"
-  - left: "{c:dim}cache:{/c} {c:value}{current_usage.cache_read_input_tokens|tokens}{/c} {c:dim}read{/c} {sep} {c:value}{current_usage.cache_creation_input_tokens|tokens}{/c} {c:dim}create{/c}"
-    right: "{c:dim}turn:{/c} {c:value}{current_usage.input_tokens|tokens}{/c} {c:dim}in{/c} {sep} {c:value}{current_usage.output_tokens|tokens}{/c} {c:dim}out{/c} {sep} {context_window.remaining_percentage|pct} {c:dim}left{/c}"
   - left: "{meter:ratelimit.5h} {c:green}{rl_5h_green}{/c}{c:1;33}{rl_5h_yellow}{/c}{c:1;31}{rl_5h_red}{/c} session"
     right: "{c:dim}resets{/c} {ratelimit.5h_eta|dim}"
   - left: "{meter:ratelimit.7d} {c:green}{rl_7d_green}{/c}{c:1;33}{rl_7d_yellow}{/c}{c:1;31}{rl_7d_red}{/c} weekly"
     right: "{c:dim}resets{/c} {ratelimit.7d_eta|dim}"
+  - left: "{c:dim}cache:{/c} {c:value}{current_usage.cache_read_input_tokens|tokens}{/c} {c:dim}read{/c} {sep} {c:value}{current_usage.cache_creation_input_tokens|tokens}{/c} {c:dim}create{/c}"
+    right: "{c:dim}turn:{/c} {c:value}{current_usage.input_tokens|tokens}{/c} {c:dim}in{/c} {sep} {c:value}{current_usage.output_tokens|tokens}{/c} {c:dim}out{/c} {sep} {context_window.remaining_percentage|pct} {c:dim}left{/c}"
   - left: ""
+
   - left: "{c:dim}plan:{/c} {c:plan}{plan.slug}{/c}"
     right: "{c:dim}session:{/c} {c:session}{session_id}{/c}"
   - left: "{c:dim}cwd:{/c} {cwd}"
     right: "{c:dim}cpu:{/c} {c:cpu}{event.sys.cpu}{/c} {sep} {c:dim}mem:{/c} {c:mem}({event.sys.mem_pct}, {event.sys.mem_used}/{event.sys.mem_total}){/c}"
   - left: "{c:dim}git:{/c} 🌿 {c:branch}{event.git.branch}{/c} {c:dim}{event.git.sha}{/c} {c:sync}{event.git.sync}{/c} {c:dirty}{event.git.dirty}{/c}"
-  - left: "{c:dim}pst:{/c} {c:clock}{event.time.pst}{/c} {event.time.pst_icon} {sep} {c:dim}mst:{/c} {c:clock}{event.time.mst}{/c} {event.time.mst_icon} {sep} {c:dim}cst:{/c} {c:clock}{event.time.cst}{/c} {event.time.cst_icon} {sep} {c:dim}est:{/c} {c:clock}{event.time.est}{/c} {event.time.est_icon}"
-  - left: "{c:dim}{event.weather.zip}:{/c} {c:cold}{event.weather.temp_cold}{/c}{c:warm}{event.weather.temp_warm}{/c}{c:hot}{event.weather.temp_hot}{/c} {c:dim}[{event.weather.condition}]{/c} {event.weather.emoji}"
   - left: ""
 
-# Theme — maps color names to ANSI codes for {c:name}...{/c} tags
+  - left: "{c:dim}pst:{/c} {c:clock}{event.time.pst}{/c} {event.time.pst_icon} {sep} {c:dim}mst:{/c} {c:clock}{event.time.mst}{/c} {event.time.mst_icon} {sep} {c:dim}cst:{/c} {c:clock}{event.time.cst}{/c} {event.time.cst_icon} {sep} {c:dim}est:{/c} {c:clock}{event.time.est}{/c} {event.time.est_icon}"
+    right: "{c:dim}{event.weather.zip}:{/c} {c:cold}{event.weather.temp_cold}{/c}{c:warm}{event.weather.temp_warm}{/c}{c:hot}{event.weather.temp_hot}{/c} {c:dim}[{event.weather.condition}]{/c} {event.weather.emoji}"
+  - left: ""
+
+# Named color aliases — hex truecolor (#RRGGBB) or raw ANSI codes
+# Referenced by name in theme values below
+colors:
+  neon_pink: "#FF1493"
+  electric_blue: "#00D4FF"
+  neon_green: "#39FF14"
+  cyber_yellow: "#FFD300"
+  neon_orange: "#FF6600"
+  neon_red: "#FF003C"
+  cyber_purple: "#BF00FF"
+  dark_cyan: "#008B8B"
+  ice_blue: "#A5F2F3"
+  neon_magenta: "#FF00FF"
+
+# Active theme (must match a key under themes:, or omit to use "default")
+current_theme: default
+
+# Themes — each theme is a map of color names to ANSI codes, hex values, or color aliases
 # Built-in names (no theme entry needed): red, green, yellow, blue, magenta,
 # cyan, white, dim, bold, bright_red, bright_green, bright_yellow, bright_blue,
 # bright_magenta, bright_cyan
-theme:
-  separator: "~"   # character rendered by {sep} token (default: |)
-  sep: "2"         # ANSI code for {sep} color (default: dim)
-  model: "1"       # bold
-  model_name: "1;36" # bold cyan
-  cost: "32"       # green
-  value: "36"      # cyan
-  session: "34"    # blue
-  plan: "33"       # yellow
-  dim: "2"         # dim
-  clock: "35"      # magenta
-  cpu: "33"        # yellow
-  mem: "35"        # magenta
-  api: "36"        # cyan
-  branch: "92"     # bright green
-  sync: "36"       # cyan
-  dirty: "33"      # yellow
-  cold: "34"       # blue
-  warm: "33"       # yellow
-  hot: "31"        # red
+# Meter colors (meter_green, meter_yellow, meter_red) override the meter bar dot colors
+themes:
+  default:
+    separator: "~"   # character rendered by {sep} token (default: |)
+    sep: "2"         # ANSI code for {sep} color (default: dim)
+    model: "1"       # bold
+    model_name: "1;36" # bold cyan
+    cost: "32"       # green
+    value: "36"      # cyan
+    session: "34"    # blue
+    plan: "33"       # yellow
+    dim: "2"         # dim
+    clock: "35"      # magenta
+    cpu: "33"        # yellow
+    mem: "35"        # magenta
+    api: "36"        # cyan
+    branch: "92"     # bright green
+    sync: "36"       # cyan
+    dirty: "33"      # yellow
+    cold: "34"       # blue
+    warm: "33"       # yellow
+    hot: "31"        # red
+  cyberpunk:
+    separator: "│"
+    sep: neon_pink
+    model: cyber_purple
+    model_name: electric_blue
+    cost: neon_green
+    value: electric_blue
+    session: cyber_purple
+    plan: cyber_yellow
+    dim: dark_cyan
+    clock: neon_magenta
+    cpu: cyber_yellow
+    mem: neon_magenta
+    api: electric_blue
+    branch: neon_green
+    sync: electric_blue
+    dirty: neon_orange
+    cold: ice_blue
+    warm: cyber_yellow
+    hot: neon_red
+    meter_green: neon_green
+    meter_yellow: cyber_yellow
+    meter_red: neon_red
 
 # Meter — visual bar for {meter:field} tokens
 meter:

@@ -4,6 +4,9 @@ pub struct MeterConfig {
     pub empty: char,
     pub threshold_yellow: f64,
     pub threshold_red: f64,
+    pub color_green: String,
+    pub color_yellow: String,
+    pub color_red: String,
 }
 
 impl Default for MeterConfig {
@@ -14,13 +17,13 @@ impl Default for MeterConfig {
             empty: '○',
             threshold_yellow: 60.0,
             threshold_red: 85.0,
+            color_green: "\x1b[32m".into(),
+            color_yellow: "\x1b[33m".into(),
+            color_red: "\x1b[31m".into(),
         }
     }
 }
 
-const ANSI_GREEN: &str = "\x1b[32m";
-const ANSI_YELLOW: &str = "\x1b[33m";
-const ANSI_RED: &str = "\x1b[31m";
 const ANSI_RESET: &str = "\x1b[0m";
 
 /// Render a metered usage bar like `[●●●○○○○○○○]` with optional ANSI color.
@@ -35,11 +38,11 @@ pub fn render(percentage: f64, config: &MeterConfig, use_color: bool) -> String 
 
     if use_color && filled_count > 0 {
         let color = if pct >= config.threshold_red {
-            ANSI_RED
+            &config.color_red
         } else if pct >= config.threshold_yellow {
-            ANSI_YELLOW
+            &config.color_yellow
         } else {
-            ANSI_GREEN
+            &config.color_green
         };
         format!("[{color}{filled}{ANSI_RESET}{empty}]")
     } else {

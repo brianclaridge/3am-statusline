@@ -1,9 +1,11 @@
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 use serde::Deserialize;
 
 use crate::meter::MeterConfig;
+use crate::template::hex_to_ansi;
 
 #[derive(Debug, Deserialize)]
 pub struct StatuslineConfig {
@@ -12,7 +14,7 @@ pub struct StatuslineConfig {
     #[serde(default)]
     pub meter: MeterYaml,
     #[serde(default)]
-    pub theme: std::collections::HashMap<String, String>,
+    pub theme: HashMap<String, String>,
     pub state: Option<StateConfig>,
     pub logging: Option<LoggingConfig>,
     #[serde(default)]
@@ -21,6 +23,12 @@ pub struct StatuslineConfig {
     pub color_fields: Vec<ColorFieldConfig>,
     #[serde(default)]
     pub columns: Option<usize>,
+    #[serde(default)]
+    pub colors: HashMap<String, String>,
+    #[serde(default)]
+    pub themes: HashMap<String, HashMap<String, String>>,
+    #[serde(default)]
+    pub current_theme: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -134,13 +142,57 @@ impl StatuslineConfig {
         self.state.as_ref().map(|s| s.dir.as_str()).unwrap_or(".data/statusline")
     }
 
-    pub fn to_meter_config(&self) -> MeterConfig {
+    /// Resolve the active theme. If `themes` is non-empty, select by `current_theme`
+    /// (defaulting to "default") and resolve color aliases. Otherwise fall back to
+    /// the legacy flat `theme` map.
+    pub fn resolve_theme(&self) -> HashMap<String, String> {
+        if self.themes.is_empty() {
+            return self.theme.clone();
+        }
+        let key = self.current_theme.as_deref().unwrap_or("default");
+        let raw = match self.themes.get(key) {
+            Some(t) => t,
+            None => return self.theme.clone(),
+        };
+        raw.iter()
+            .map(|(k, v)| (k.clone(), self.resolve_color_value(v)))
+            .collect()
+    }
+
+    /// Resolve a color value: named alias → hex → raw passthrough.
+    fn resolve_color_value(&self, value: &str) -> String {
+        if let Some(resolved) = self.colors.get(value) {
+            if let Some(code) = hex_to_ansi(resolved) {
+                return code;
+            }
+            return resolved.clone();
+        }
+        if let Some(code) = hex_to_ansi(value) {
+            return code;
+        }
+        value.to_string()
+    }
+
+    pub fn to_meter_config(&self, theme: &HashMap<String, String>) -> MeterConfig {
+        let color_green = theme.get("meter_green")
+            .map(|c| format!("\x1b[{c}m"))
+            .unwrap_or_else(|| "\x1b[32m".into());
+        let color_yellow = theme.get("meter_yellow")
+            .map(|c| format!("\x1b[{c}m"))
+            .unwrap_or_else(|| "\x1b[33m".into());
+        let color_red = theme.get("meter_red")
+            .map(|c| format!("\x1b[{c}m"))
+            .unwrap_or_else(|| "\x1b[31m".into());
+
         MeterConfig {
             width: self.meter.width,
             filled: self.meter.filled.chars().next().unwrap_or('●'),
             empty: self.meter.empty.chars().next().unwrap_or('○'),
             threshold_yellow: self.meter.thresholds.yellow,
             threshold_red: self.meter.thresholds.red,
+            color_green,
+            color_yellow,
+            color_red,
         }
     }
 
@@ -263,7 +315,8 @@ meter:
     red: 75
 "##;
         let config: StatuslineConfig = serde_yml::from_str(yaml).unwrap();
-        let mc = config.to_meter_config();
+        let theme = config.resolve_theme();
+        let mc = config.to_meter_config(&theme);
         assert_eq!(mc.width, 5);
         assert_eq!(mc.filled, '#');
         assert_eq!(mc.empty, '-');
@@ -341,5 +394,85 @@ events:
         let yaml = "{}";
         let config: StatuslineConfig = serde_yml::from_str(yaml).unwrap();
         assert!(config.events.is_empty());
+    }
+
+    #[test]
+    fn resolve_theme_legacy_fallback() {
+        let yaml = r#"
+theme:
+  model: "1;36"
+  sep: "2"
+"#;
+        let config: StatuslineConfig = serde_yml::from_str(yaml).unwrap();
+        let theme = config.resolve_theme();
+        assert_eq!(theme.get("model").unwrap(), "1;36");
+        assert_eq!(theme.get("sep").unwrap(), "2");
+    }
+
+    #[test]
+    fn resolve_theme_named_theme() {
+        let yaml = r##"
+colors:
+  neon_pink: "#FF1493"
+
+current_theme: cyber
+
+themes:
+  cyber:
+    sep: neon_pink
+    model: "1"
+"##;
+        let config: StatuslineConfig = serde_yml::from_str(yaml).unwrap();
+        let theme = config.resolve_theme();
+        // neon_pink alias resolved to truecolor ANSI
+        assert_eq!(theme.get("sep").unwrap(), "38;2;255;20;147");
+        // Raw ANSI passed through
+        assert_eq!(theme.get("model").unwrap(), "1");
+    }
+
+    #[test]
+    fn resolve_theme_default_selection() {
+        let yaml = r#"
+themes:
+  default:
+    model: "1;36"
+  other:
+    model: "31"
+"#;
+        let config: StatuslineConfig = serde_yml::from_str(yaml).unwrap();
+        let theme = config.resolve_theme();
+        assert_eq!(theme.get("model").unwrap(), "1;36");
+    }
+
+    #[test]
+    fn resolve_theme_hex_direct() {
+        let yaml = r##"
+themes:
+  default:
+    model: "#00FF00"
+"##;
+        let config: StatuslineConfig = serde_yml::from_str(yaml).unwrap();
+        let theme = config.resolve_theme();
+        assert_eq!(theme.get("model").unwrap(), "38;2;0;255;0");
+    }
+
+    #[test]
+    fn meter_config_with_theme_colors() {
+        let yaml = r##"
+colors:
+  neon_green: "#39FF14"
+
+themes:
+  default:
+    meter_green: neon_green
+    meter_red: "#FF0000"
+"##;
+        let config: StatuslineConfig = serde_yml::from_str(yaml).unwrap();
+        let theme = config.resolve_theme();
+        let mc = config.to_meter_config(&theme);
+        assert_eq!(mc.color_green, "\x1b[38;2;57;255;20m");
+        assert_eq!(mc.color_red, "\x1b[38;2;255;0;0m");
+        // yellow falls back to default
+        assert_eq!(mc.color_yellow, "\x1b[33m");
     }
 }

@@ -42,9 +42,13 @@ meter:
   empty: "○"
 ```
 
+## Themes
+
+Multiple color themes are supported via the `themes` config section. Set `current_theme` to switch between them, or run `/3am-statusline:theme` to browse and apply themes interactively. A built-in cyberpunk theme is included.
+
 ## Documentation
 
-- [Configuration](docs/configuration.md) — config sections, template tokens, format specifiers, available fields, color fields, theme
+- [Configuration](docs/configuration.md) — config sections, template tokens, format specifiers, available fields, colors, themes
 - [Events](docs/events.md) — built-in events (git, time, sys, status, version, weather), custom events
 
 ## License

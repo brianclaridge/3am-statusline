@@ -115,14 +115,14 @@ fn render() -> Result<()> {
     let config_columns = cfg.as_ref().and_then(|c| c.columns);
     let width = template::terminal_width(config_columns);
 
-    let meter_config = cfg
-        .as_ref()
-        .map(|c| c.to_meter_config())
-        .unwrap_or_default();
-
     let theme = cfg
         .as_ref()
-        .map(|c| c.theme.clone())
+        .map(|c| c.resolve_theme())
+        .unwrap_or_default();
+
+    let meter_config = cfg
+        .as_ref()
+        .map(|c| c.to_meter_config(&theme))
         .unwrap_or_default();
 
     let lines = cfg

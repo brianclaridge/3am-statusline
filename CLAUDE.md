@@ -30,7 +30,7 @@ src/
     weather.rs  # Weather via Open-Meteo + Zippopotam.us geocoding (JSON)
   events.rs     # Timer-based event system (shell commands at intervals)
   payload.rs    # Serde types for Claude Code JSON schema
-  template.rs   # Template parser: {field}, {field|format}, {meter:field}, {sep}
+  template.rs   # Template parser: {field}, {field|format}, {meter:field}, {sep}, {c:name}, {c:#hex}, {/c}
   meter.rs      # Meter rendering with ANSI colors
   format.rs     # Format specifiers (currency, pct, duration, tokens, comma)
   ratelimit.rs  # Anthropic API rate limit cache
@@ -45,12 +45,14 @@ src/
 skills/
   setup/
     SKILL.md        # /3am-statusline:setup — platform detection + settings wiring
+  theme/
+    SKILL.md        # /3am-statusline:theme — browse and apply color themes
 bin/release/        # Pre-built binaries per platform
 ```
 
 ## Extended docs
 
-- [Configuration](docs/configuration.md) — config sections, template tokens, fields, color fields
+- [Configuration](docs/configuration.md) — config sections, template tokens, fields, colors, themes
 - [Events](docs/events.md) — built-in events, custom events, wiring
 
 ## Cross-platform

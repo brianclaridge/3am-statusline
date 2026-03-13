@@ -12,7 +12,7 @@ Create `config/statusline.yml` or `.claude/statusline.yml` in your project root.
 
 ## Sections
 
-Six top-level keys: `lines`, `meter`, `color_fields`, `events`, `logging`, `columns`.
+Nine top-level keys: `lines`, `meter`, `colors`, `themes`, `current_theme`, `color_fields`, `events`, `logging`, `columns`.
 
 ### Lines
 
@@ -41,17 +41,51 @@ meter:
     red: 85
 ```
 
-### Theme
+### Colors
 
-Maps color names to ANSI codes. Referenced by `{c:name}...{/c}` tags and the `{sep}` token.
+Named color aliases mapped to hex truecolor (`#RRGGBB`) or raw ANSI codes. Referenced by name in theme values.
 
 ```yaml
-theme:
-  model: "1"         # bold
-  model_name: "1;36" # bold cyan
-  dim: "2"
-  sep: "2"           # dim separator
-  separator: "|"     # separator character (default |)
+colors:
+  neon_pink: "#FF1493"
+  electric_blue: "#00D4FF"
+  neon_green: "#39FF14"
+```
+
+### Themes
+
+Multiple named themes, each a map of color names to ANSI codes, hex values, or color aliases. Replaces the old flat `theme:` key (which still works as a fallback if `themes:` is absent).
+
+Meter colors (`meter_green`, `meter_yellow`, `meter_red`) override the meter bar dot colors per theme.
+
+```yaml
+themes:
+  default:
+    model: "1"         # bold
+    model_name: "1;36" # bold cyan
+    dim: "2"
+    sep: "2"           # dim separator
+    separator: "|"     # separator character (default |)
+  cyberpunk:
+    sep: neon_pink     # resolved via colors alias
+    model: electric_blue
+    meter_green: neon_green
+```
+
+### current_theme
+
+Selects the active theme from `themes:`. Defaults to `"default"` if omitted.
+
+```yaml
+current_theme: cyberpunk
+```
+
+### Hex truecolor in templates
+
+You can use `#RRGGBB` hex colors directly in `{c:...}` tags:
+
+```yaml
+- left: "{c:#FF0000}red text{/c}"
 ```
 
 ### Columns

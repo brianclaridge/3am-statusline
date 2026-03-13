@@ -54,8 +54,20 @@ pub fn resolve(
     result
 }
 
+/// Parse a `#RRGGBB` hex color into a truecolor ANSI code (`38;2;R;G;B`).
+pub(crate) fn hex_to_ansi(hex: &str) -> Option<String> {
+    let hex = hex.strip_prefix('#')?;
+    if hex.len() != 6 || !hex.bytes().all(|b| b.is_ascii_hexdigit()) {
+        return None;
+    }
+    let r = u8::from_str_radix(&hex[0..2], 16).ok()?;
+    let g = u8::from_str_radix(&hex[2..4], 16).ok()?;
+    let b = u8::from_str_radix(&hex[4..6], 16).ok()?;
+    Some(format!("38;2;{r};{g};{b}"))
+}
+
 /// Map a color name to an ANSI code. Checks theme first, then built-in names,
-/// then raw ANSI codes (e.g. "1;33", "38;5;196").
+/// then raw ANSI codes (e.g. "1;33", "38;5;196"), then hex truecolor (`#RRGGBB`).
 fn color_code(name: &str, theme: &HashMap<String, String>) -> Option<String> {
     if let Some(code) = theme.get(name) {
         return Some(code.clone());
@@ -80,6 +92,10 @@ fn color_code(name: &str, theme: &HashMap<String, String>) -> Option<String> {
             // Accept raw ANSI codes (digits and semicolons only)
             if !name.is_empty() && name.bytes().all(|b| b.is_ascii_digit() || b == b';') {
                 return Some(name.to_string());
+            }
+            // Try hex truecolor (#RRGGBB)
+            if let Some(code) = hex_to_ansi(name) {
+                return Some(code);
             }
             return None;
         }
@@ -133,7 +149,12 @@ fn resolve_token(
             let cfg = MeterConfig {
                 threshold_yellow: yellow,
                 threshold_red: red,
-                ..*meter_config
+                width: meter_config.width,
+                filled: meter_config.filled,
+                empty: meter_config.empty,
+                color_green: meter_config.color_green.clone(),
+                color_yellow: meter_config.color_yellow.clone(),
+                color_red: meter_config.color_red.clone(),
             };
             return meter::render(pct, &cfg, use_color);
         }
@@ -444,5 +465,36 @@ mod tests {
     #[test]
     fn strip_ansi_len_with_color() {
         assert_eq!(strip_ansi_len("\x1b[32mhi\x1b[0m"), 2);
+    }
+
+    #[test]
+    fn hex_to_ansi_valid() {
+        assert_eq!(hex_to_ansi("#FF1493"), Some("38;2;255;20;147".into()));
+    }
+
+    #[test]
+    fn hex_to_ansi_lowercase() {
+        assert_eq!(hex_to_ansi("#00d4ff"), Some("38;2;0;212;255".into()));
+    }
+
+    #[test]
+    fn hex_to_ansi_invalid() {
+        assert_eq!(hex_to_ansi("FF1493"), None); // missing #
+        assert_eq!(hex_to_ansi("#GGGGGG"), None); // invalid hex chars
+        assert_eq!(hex_to_ansi("#FFF"), None); // too short
+    }
+
+    #[test]
+    fn color_code_hex_inline() {
+        let result = resolve(
+            "{c:#FF0000}hi{/c}",
+            &ctx(&[]),
+            &strs(&[]),
+            &empty_meter(),
+            true,
+            &no_theme(),
+            &no_overrides(),
+        );
+        assert_eq!(result, "\x1b[38;2;255;0;0mhi\x1b[0m");
     }
 }
