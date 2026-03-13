@@ -29,7 +29,7 @@ lines:
     right: "{c:dim}cpu:{/c} {c:cpu}{event.sys.cpu}{/c} {c:sep}|{/c} {c:dim}mem:{/c} {c:mem}({event.sys.mem_pct}, {event.sys.mem_used}/{event.sys.mem_total}){/c}"
   - left: "{c:dim}git:{/c} 🌿 {c:branch}{event.git.branch}{/c} {c:dim}{event.git.sha}{/c} {c:sync}{event.git.sync}{/c} {c:dirty}{event.git.dirty}{/c}"
   - left: "{c:dim}pst:{/c} {c:clock}{event.time.pst}{/c} {event.time.pst_icon} {c:sep}|{/c} {c:dim}mst:{/c} {c:clock}{event.time.mst}{/c} {event.time.mst_icon} {c:sep}|{/c} {c:dim}cst:{/c} {c:clock}{event.time.cst}{/c} {event.time.cst_icon} {c:sep}|{/c} {c:dim}est:{/c} {c:clock}{event.time.est}{/c} {event.time.est_icon}"
-  - left: "{c:dim}{event.weather.zip}:{/c} {c:cold}{event.weather.temp_cold}{/c}{c:warm}{event.weather.temp_warm}{/c}{c:hot}{event.weather.temp_hot}{/c} {event.weather.emoji} {c:dim}[{event.weather.condition}]{/c}"
+  - left: "{c:dim}{event.weather.zip}:{/c} {c:cold}{event.weather.temp_cold}{/c}{c:warm}{event.weather.temp_warm}{/c}{c:hot}{event.weather.temp_hot}{/c} {c:dim}[{event.weather.condition}]{/c} {event.weather.emoji}"
   - left: ""
 
 theme:

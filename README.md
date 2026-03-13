@@ -2,6 +2,8 @@
 
 A configurable status bar for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) sessions. Displays model info, cost, context usage, rate limits, budget tracking, and custom event data.
 
+![3am-statusline screenshot](screenshot.png)
+
 ## Install
 
 ### As a Claude Code plugin (recommended)
@@ -65,6 +67,8 @@ meter:
 | `{field\|color}` | `{model.display_name\|dim}` | dim text |
 | `{meter:field}` | `{meter:context_window.used_percentage}` | `[●●●○○○○○○○]` |
 | `{event.name}` | `{event.branch}` | `main` |
+| `{c:name}...{/c}` | `{c:green}ok{/c}` | green "ok" |
+| `{c:code}...{/c}` | `{c:1;33}warn{/c}` | bold yellow "warn" |
 
 ### Format specifiers
 
@@ -140,7 +144,7 @@ Use in templates with color tags:
 - left: "{c:green}{ctx_pct_green}{/c}{c:1;33}{ctx_pct_yellow}{/c}{c:1;31}{ctx_pct_red}{/c} ctx"
 ```
 
-The `{c:...}` tag accepts theme names (`green`, `dim`) or raw ANSI codes (`1;33` for bold yellow).
+The `{c:...}` tag accepts theme names (`green`, `dim`) or raw ANSI codes (`1;33` for bold yellow). Meters (`{meter:field}`) with a matching color field automatically use the same thresholds, so dot colors and text colors stay in sync.
 
 ## Budget tracking
 
