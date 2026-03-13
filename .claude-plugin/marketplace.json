@@ -10,8 +10,8 @@
     {
       "name": "3am-statusline",
       "source": {
-        "source": "github",
-        "repo": "brianclaridge/3am-statusline"
+        "source": "url",
+        "url": "https://github.com/brianclaridge/3am-statusline.git"
       },
       "description": "Configurable ANSI status display for Claude Code sessions"
     }
