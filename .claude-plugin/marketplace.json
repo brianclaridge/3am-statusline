@@ -1,0 +1,13 @@
+{
+  "name": "3am",
+  "owner": {
+    "name": "Brian Claridge"
+  },
+  "plugins": [
+    {
+      "name": "3am-statusline",
+      "source": ".",
+      "description": "Configurable ANSI status display for Claude Code sessions"
+    }
+  ]
+}

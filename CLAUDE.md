@@ -40,6 +40,7 @@ src/
 ```text
 .claude-plugin/
   plugin.json       # Plugin manifest (name, version, skills path)
+  marketplace.json  # Self-hosted marketplace for git-based install
 skills/
   setup/
     SKILL.md        # /3am-statusline:setup — platform detection + settings wiring

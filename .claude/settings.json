@@ -16,7 +16,7 @@
   "outputStyle": "engineer",
   "statusLine": {
     "type": "command",
-    "command": "node shim.js",
+    "command": "bin/release/3am-statusline",
     "padding": 1
   },
   "plansDirectory": ".claude/plans",

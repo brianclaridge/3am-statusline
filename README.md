@@ -7,7 +7,8 @@ A configurable status bar for [Claude Code](https://docs.anthropic.com/en/docs/c
 ### As a Claude Code plugin (recommended)
 
 ```bash
-claude plugin add 3am-statusline
+/plugin marketplace add brianclaridge/3am-statusline
+/plugin install 3am-statusline@3am
 ```
 
 Then run the setup skill:
@@ -30,7 +31,7 @@ Then point your `.claude/settings.json` at the binary:
 
 ```json
 {
-  "statusLine": "/path/to/3am-statusline/bin/release/3am-statusline-linux-x64"
+  "statusLine": "/path/to/bin/release/3am-statusline-linux-x64"
 }
 ```
 
