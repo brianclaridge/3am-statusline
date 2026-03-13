@@ -76,7 +76,6 @@ Notable stabilizations relevant to this project:
 
 | Item | Location | Issue |
 | --- | --- | --- |
-| `curl` subprocess | `ratelimit.rs:86` | Replace with `ureq` (already a dep) |
-| `#[allow(dead_code)]` | `config.rs:54` | `ThresholdConfig.green` read by serde but unused in logic |
-| Shell wrapper for events | `events.rs:119` | Consider `Command::new` for built-in event commands |
-| Missing `with_capacity` | `event/git.rs:38,74` | Small vecs, low priority |
+| `#[allow(dead_code)]` | `config.rs:65` | `ThresholdConfig.green` read by serde but unused in logic |
+| Shell wrapper for events | `events.rs:129` | Consider `Command::new` for built-in event commands |
+| Missing `with_capacity` | `event/git.rs:47,91` | Small vecs, low priority |

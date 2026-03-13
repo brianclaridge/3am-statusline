@@ -9,6 +9,7 @@ mod template;
 
 use std::collections::HashMap;
 use std::io::Read;
+use std::io::Write;
 
 use anyhow::{Context, Result};
 use chrono::Utc;
@@ -69,6 +70,7 @@ fn main() {
                 EventKind::Weather { ref zip } => event::weather::run(zip),
             };
             if let Err(e) = result {
+                let _ = std::io::stdout().flush();
                 eprintln!("statusline: {e:#}");
                 std::process::exit(1);
             }
@@ -78,6 +80,7 @@ fn main() {
                 let view_path = format!("{DEFAULT_STATE_DIR}/last_view.txt");
                 if let Ok(cached) = std::fs::read_to_string(&view_path) {
                     print!("{cached}");
+                    let _ = std::io::stdout().flush();
                 }
                 eprintln!("statusline: {e:#}");
                 std::process::exit(1);
@@ -208,6 +211,7 @@ fn render() -> Result<()> {
 
     // Render to stdout first (latency-critical path)
     print!("{output}");
+    let _ = std::io::stdout().flush();
 
     // Cache the rendered view for fallback on next failed invocation
     let _ = cache_view(&output, &view_cache_path);
@@ -239,7 +243,9 @@ fn cache_view(output: &str, view_cache_path: &str) -> Result<()> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).context("creating cache directory")?;
     }
-    std::fs::write(path, output).context("writing view cache")?;
+    let tmp_path = format!("{view_cache_path}.tmp");
+    std::fs::write(&tmp_path, output).context("writing temp cache")?;
+    std::fs::rename(&tmp_path, path).context("renaming cache file")?;
     Ok(())
 }
 
