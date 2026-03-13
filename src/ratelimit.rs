@@ -26,13 +26,13 @@ pub struct ClaimData {
     pub reset: i64,
 }
 
-fn cache_path() -> std::path::PathBuf {
-    Path::new(".data/statusline/ratelimits.json").to_path_buf()
+fn cache_path(state_dir: &str) -> std::path::PathBuf {
+    Path::new(state_dir).join("ratelimits.json")
 }
 
 /// Load cached rate limit data. Returns None if missing or unreadable.
-pub fn load_cached() -> Option<RateLimitCache> {
-    std::fs::read_to_string(cache_path())
+pub fn load_cached(state_dir: &str) -> Option<RateLimitCache> {
+    std::fs::read_to_string(cache_path(state_dir))
         .ok()
         .and_then(|s| serde_json::from_str(&s).ok())
 }
@@ -77,7 +77,7 @@ fn format_eta(secs: i64) -> String {
 
 /// Refresh the cache by calling the API with curl. Blocks ~500ms.
 /// Call AFTER stdout is flushed so rendering is not delayed.
-pub fn refresh() {
+pub fn refresh(state_dir: &str) {
     let token = match read_api_token() {
         Some(t) => t,
         None => return,
@@ -113,7 +113,7 @@ pub fn refresh() {
     };
 
     if let Some(cache) = parse_headers(&stdout) {
-        let path = cache_path();
+        let path = cache_path(state_dir);
         if let Some(parent) = path.parent() {
             let _ = std::fs::create_dir_all(parent);
         }

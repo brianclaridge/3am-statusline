@@ -16,12 +16,13 @@ use chrono::Utc;
 use payload::StatusPayload;
 
 const VERSION: &str = env!("BUILD_VERSION");
-const VIEW_CACHE_PATH: &str = ".data/statusline/last_view.txt";
+const DEFAULT_STATE_DIR: &str = ".data/statusline";
 
 fn main() {
     if let Err(e) = run() {
         // On any error, try to serve the cached view
-        if let Ok(cached) = std::fs::read_to_string(VIEW_CACHE_PATH) {
+        let view_path = format!("{DEFAULT_STATE_DIR}/last_view.txt");
+        if let Ok(cached) = std::fs::read_to_string(&view_path) {
             print!("{cached}");
         }
         eprintln!("statusline: {e:#}");
@@ -35,19 +36,21 @@ fn run() -> Result<()> {
         .read_to_string(&mut input)
         .context("reading stdin")?;
 
+    let cfg = config::load().context("loading config")?;
+    let state_dir = cfg.as_ref().map(|c| c.state_dir()).unwrap_or(DEFAULT_STATE_DIR);
+    let view_cache_path = format!("{state_dir}/last_view.txt");
+
     // Empty stdin → serve cached view
     if input.trim().is_empty() {
-        if let Ok(cached) = std::fs::read_to_string(VIEW_CACHE_PATH) {
+        if let Ok(cached) = std::fs::read_to_string(&view_cache_path) {
             print!("{cached}");
         }
         return Ok(());
     }
 
-    let cfg = config::load().context("loading config")?;
-
     // Log raw payload before deserialization (fire-and-forget)
-    if let Some(ref logging) = cfg.as_ref().and_then(|c| c.logging.as_ref()) {
-        let _ = write_log(&input, &logging.dir, logging.keep);
+    if let Some(ref json_cfg) = cfg.as_ref().and_then(|c| c.logging.as_ref()).and_then(|l| l.json.as_ref()) {
+        let _ = write_log(&input, &json_cfg.dir, json_cfg.keep);
     }
 
     let payload: StatusPayload =
@@ -81,7 +84,7 @@ fn run() -> Result<()> {
     }
 
     // Load cached rate limit data
-    let rl_cache = ratelimit::load_cached();
+    let rl_cache = ratelimit::load_cached(state_dir);
     let rl_stale = ratelimit::is_stale(&rl_cache);
     if let Some(ref cache) = rl_cache {
         ratelimit::inject_fields(cache, &mut context, &mut strings);
@@ -89,7 +92,7 @@ fn run() -> Result<()> {
 
     // Load cached event data and inject into template context
     let event_configs = cfg.as_ref().map(|c| &c.events[..]).unwrap_or(&[]);
-    let mut event_cache = events::load_cache().unwrap_or_default();
+    let mut event_cache = events::load_cache(state_dir).unwrap_or_default();
     if !event_configs.is_empty() {
         events::inject_fields(&event_cache, &mut context, &mut strings);
     }
@@ -97,7 +100,7 @@ fn run() -> Result<()> {
     // Load budget data if configured
     let budget_config = cfg.as_ref().and_then(|c| c.budget.as_ref());
     if let Some(bc) = budget_config {
-        if let Ok(fields) = budget::load_budget(bc) {
+        if let Ok(fields) = budget::load_budget(bc, state_dir) {
             budget::inject_fields(&fields, &mut context);
         }
     }
@@ -123,11 +126,11 @@ fn run() -> Result<()> {
     print!("{output}");
 
     // Cache the rendered view for fallback on next failed invocation
-    let _ = cache_view(&output);
+    let _ = cache_view(&output, &view_cache_path);
 
     // Write compact event log (fire-and-forget, after stdout)
     if let Some(ref logging) = cfg.as_ref().and_then(|c| c.logging.as_ref()) {
-        let _ = write_event_log(&payload, &context, &strings, &logging.dir);
+        let _ = write_event_log(&payload, &context, &strings, &logging.file);
     }
 
     // Persist usage data after stdout flush (fire-and-forget)
@@ -137,6 +140,7 @@ fn run() -> Result<()> {
             payload.context_window.total_input_tokens,
             payload.context_window.total_output_tokens,
             payload.cost.total_cost_usd,
+            state_dir,
         );
     }
 
@@ -145,20 +149,20 @@ fn run() -> Result<()> {
         let due = events::due_events(event_configs, &event_cache);
         if !due.is_empty() {
             events::fire(&due, &mut event_cache);
-            events::save_cache(&event_cache);
+            events::save_cache(&event_cache, state_dir);
         }
     }
 
     // Refresh rate limit cache if stale (runs curl, ~500ms, after stdout)
     if rl_stale {
-        ratelimit::refresh();
+        ratelimit::refresh(state_dir);
     }
 
     Ok(())
 }
 
-fn cache_view(output: &str) -> Result<()> {
-    let path = std::path::Path::new(VIEW_CACHE_PATH);
+fn cache_view(output: &str, view_cache_path: &str) -> Result<()> {
+    let path = std::path::Path::new(view_cache_path);
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).context("creating cache directory")?;
     }
@@ -166,17 +170,18 @@ fn cache_view(output: &str) -> Result<()> {
     Ok(())
 }
 
-const EVENT_LOG_NAME: &str = "statusline.log";
 const EVENT_LOG_MAX_LINES: usize = 100;
 
 fn write_event_log(
     payload: &StatusPayload,
     nums: &HashMap<String, f64>,
     strings: &HashMap<String, String>,
-    dir: &str,
+    log_file: &str,
 ) -> Result<()> {
-    let dir_path = std::path::Path::new(dir);
-    std::fs::create_dir_all(dir_path).context("creating log directory")?;
+    let log_path = std::path::Path::new(log_file);
+    if let Some(parent) = log_path.parent() {
+        std::fs::create_dir_all(parent).context("creating log directory")?;
+    }
 
     let now = Utc::now();
     let ts = now.format("%Y-%m-%d %H:%M:%S");
@@ -211,10 +216,8 @@ fn write_event_log(
 
     let line = parts.join(" | ");
 
-    let log_path = dir_path.join(EVENT_LOG_NAME);
-
     // Read existing lines, prepend new line, truncate
-    let existing = std::fs::read_to_string(&log_path).unwrap_or_default();
+    let existing = std::fs::read_to_string(log_path).unwrap_or_default();
     let lines: Vec<&str> = std::iter::once(line.as_str())
         .chain(existing.lines())
         .take(EVENT_LOG_MAX_LINES)
@@ -222,7 +225,7 @@ fn write_event_log(
     // Ensure trailing newline
     let content = lines.join("\n") + "\n";
 
-    std::fs::write(&log_path, content).context("writing event log")?;
+    std::fs::write(log_path, content).context("writing event log")?;
     Ok(())
 }
 

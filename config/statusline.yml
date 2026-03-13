@@ -1,9 +1,14 @@
 # Example 3am-statusline config
 # Copy to .claude/statusline.yml in your project root
 
+state:
+  dir: ".data/statusline"
+
 logging:
-  dir: ".data/logs/statusline"
-  keep: 15
+  file: ".data/statusline/statusline.log"
+  json:
+    dir: ".data/statusline/json"
+    keep: 15
 
 lines:
   - left: ""
@@ -11,19 +16,17 @@ lines:
   - left: "{c:dim}cwd:{/c} {cwd}"
   - left: "{c:dim}session:{/c} {c:session}{session_id}{/c}"
     right: "{c:plan}{plan.slug}{/c}"
-  - left: "{c:model}{model.display_name}{/c} {c:dim}v{version}{/c}"
+  - left: "{c:model}Claude {model.display_name}{/c} {c:sep}|{/c} {c:dim}v{version}{/c} {c:sep}|{/c} {event.claude}"
     right: "{c:green}+{cost.total_lines_added|comma}{/c} {c:red}-{cost.total_lines_removed|comma}{/c} lines [{cost.total_cost_usd|currency|cost}]"
   - left: "{meter:context_window.used_percentage} {context_window.used_percentage|pct|value} ctx"
-    right: "{context_window.total_input_tokens|tokens|value} tok"
+    right: "{context_window.total_input_tokens|tokens|value} tok {c:sep}|{/c} {context_window.total_output_tokens|tokens|value} out"
   - left: "{meter:ratelimit.5h} {ratelimit.5h|pct|value} session"
     right: "{c:dim}resets{/c} {ratelimit.5h_eta|dim}"
   - left: "{meter:ratelimit.7d} {ratelimit.7d|pct|value} weekly"
     right: "{c:dim}resets{/c} {ratelimit.7d_eta|dim}"
-  - left: "{context_window.total_output_tokens|tokens|value} out"
-    right: ""
-  - left: "{c:dim}pst{/c} {c:clock}{event.pst}{/c} {c:sep}|{/c} {c:dim}mst{/c} {c:clock}{event.mst}{/c} {c:sep}|{/c} {c:dim}cst{/c} {c:clock}{event.cst}{/c} {c:sep}|{/c} {c:dim}est{/c} {c:clock}{event.est}{/c}"
-    right: "{c:cpu}cpu {event.cpu}{/c} {c:sep}|{/c} {event.claude}"
-  - left: "{c:git}{event.git}{/c}"
+  - left: "{c:dim}pst{/c} {c:clock}{event.time.pst}{/c} {c:sep}|{/c} {c:dim}mst{/c} {c:clock}{event.time.mst}{/c} {c:sep}|{/c} {c:dim}cst{/c} {c:clock}{event.time.cst}{/c} {c:sep}|{/c} {c:dim}est{/c} {c:clock}{event.time.est}{/c}"
+    right: "{c:cpu}cpu {event.sys.cpu}{/c} {c:sep}|{/c} {c:mem}mem {event.sys.mem}{/c}"
+  - left: "🌿 {c:branch}{event.git.branch}{/c} {c:sync}{event.git.sync}{/c} {c:sep}|{/c} {c:dirty}{event.git.dirty}{/c}"
   - left: ""
 
 theme:
@@ -35,9 +38,12 @@ theme:
   dim: "2"          # dim
   clock: "35"       # magenta
   cpu: "33"         # yellow
+  mem: "35"         # magenta
   api: "36"         # cyan
   sep: "2"          # dim
-  git: "92"         # bright green
+  branch: "92"      # bright green
+  sync: "36"        # cyan
+  dirty: "33"       # yellow
 
 meter:
   width: 10
@@ -53,24 +59,12 @@ events:
     command: "uv run scripts/status.py"
     interval: 30s
     capture: true
-  - name: cpu
-    command: "top -bn1 | awk '/^%Cpu/{printf \"%.0f%%\", 100-$8}'"
+  - name: sys
+    command: "uv run scripts/system.py"
     interval: 3s
     capture: true
-  - name: pst
-    command: "uv run scripts/time.py PST"
-    interval: 5s
-    capture: true
-  - name: mst
-    command: "uv run scripts/time.py MST"
-    interval: 5s
-    capture: true
-  - name: cst
-    command: "uv run scripts/time.py CST"
-    interval: 5s
-    capture: true
-  - name: est
-    command: "uv run scripts/time.py EST"
+  - name: time
+    command: "uv run scripts/time.py"
     interval: 5s
     capture: true
   - name: git

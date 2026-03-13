@@ -9,7 +9,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::config::BudgetConfig;
 
-const USAGE_FILE: &str = ".data/statusline/usage.jsonl";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UsageEntry {
@@ -31,8 +30,8 @@ pub struct BudgetFields {
 }
 
 /// Load existing usage data, aggregate, and return computed budget fields.
-pub fn load_budget(config: &BudgetConfig) -> Result<BudgetFields> {
-    let path = usage_path();
+pub fn load_budget(config: &BudgetConfig, state_dir: &str) -> Result<BudgetFields> {
+    let path = usage_path(state_dir);
     let entries = read_entries(&path).unwrap_or_default();
 
     let now = Utc::now();
@@ -79,8 +78,8 @@ pub fn inject_fields(fields: &BudgetFields, nums: &mut HashMap<String, f64>) {
 
 /// Persist a usage entry after stdout has been flushed.
 /// Deduplicates by session: if the last line has the same sid, replaces it.
-pub fn persist(session_id: &str, input: u64, output: u64, cost_usd: f64) -> Result<()> {
-    let path = usage_path();
+pub fn persist(session_id: &str, input: u64, output: u64, cost_usd: f64, state_dir: &str) -> Result<()> {
+    let path = usage_path(state_dir);
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent).context("creating usage directory")?;
     }
@@ -114,8 +113,8 @@ pub fn persist(session_id: &str, input: u64, output: u64, cost_usd: f64) -> Resu
     Ok(())
 }
 
-fn usage_path() -> PathBuf {
-    PathBuf::from(USAGE_FILE)
+fn usage_path(state_dir: &str) -> PathBuf {
+    PathBuf::from(state_dir).join("usage.jsonl")
 }
 
 fn read_lines(path: &PathBuf) -> Result<Vec<String>> {

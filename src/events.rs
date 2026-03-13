@@ -11,7 +11,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::config::EventConfig;
 
-const CACHE_PATH: &str = ".data/statusline/events.json";
 const MAX_STDOUT_BYTES: usize = 1024;
 
 #[derive(Debug, Serialize, Deserialize, Default)]
@@ -50,15 +49,17 @@ pub fn parse_interval(s: &str) -> Result<i64> {
 }
 
 /// Load event cache from disk.
-pub fn load_cache() -> Option<EventCache> {
-    std::fs::read_to_string(CACHE_PATH)
+pub fn load_cache(state_dir: &str) -> Option<EventCache> {
+    let path = format!("{state_dir}/events.json");
+    std::fs::read_to_string(path)
         .ok()
         .and_then(|s| serde_json::from_str(&s).ok())
 }
 
 /// Save event cache to disk.
-pub fn save_cache(cache: &EventCache) {
-    let path = Path::new(CACHE_PATH);
+pub fn save_cache(cache: &EventCache, state_dir: &str) {
+    let path_str = format!("{state_dir}/events.json");
+    let path = Path::new(&path_str);
     if let Some(parent) = path.parent() {
         let _ = std::fs::create_dir_all(parent);
     }
@@ -83,6 +84,7 @@ pub fn due_events<'a>(configs: &'a [EventConfig], cache: &EventCache) -> Vec<&'a
 }
 
 /// Inject cached event stdout values into the template context as `event.{name}`.
+/// If stdout is a JSON object, each key is also injected as `event.{name}.{key}`.
 pub fn inject_fields(
     cache: &EventCache,
     _nums: &mut HashMap<String, f64>,
@@ -91,6 +93,16 @@ pub fn inject_fields(
     for (name, entry) in &cache.entries {
         if let Some(ref stdout) = entry.stdout {
             strings.insert(format!("event.{name}"), stdout.clone());
+            // JSON expansion: if stdout is a JSON object, inject each key
+            if let Ok(serde_json::Value::Object(map)) = serde_json::from_str(stdout) {
+                for (key, val) in &map {
+                    let s = match val {
+                        serde_json::Value::String(s) => s.clone(),
+                        other => other.to_string(),
+                    };
+                    strings.insert(format!("event.{name}.{key}"), s);
+                }
+            }
         }
     }
 }
@@ -261,6 +273,47 @@ mod tests {
         let entry = &cache.entries["echo_test"];
         assert_eq!(entry.stdout.as_deref(), Some("hello"));
         assert_eq!(entry.exit_code, 0);
+    }
+
+    #[test]
+    fn inject_expands_json_object() {
+        let mut cache = EventCache::default();
+        cache.entries.insert(
+            "git".into(),
+            EventEntry {
+                fired_at: 0,
+                stdout: Some(r#"{"branch":"main","sync":"+4","dirty":"3M 1S"}"#.into()),
+                exit_code: 0,
+            },
+        );
+        let mut nums = HashMap::new();
+        let mut strs = HashMap::new();
+        inject_fields(&cache, &mut nums, &mut strs);
+        // Raw JSON preserved
+        assert!(strs["event.git"].starts_with('{'));
+        // Sub-keys expanded
+        assert_eq!(strs["event.git.branch"], "main");
+        assert_eq!(strs["event.git.sync"], "+4");
+        assert_eq!(strs["event.git.dirty"], "3M 1S");
+    }
+
+    #[test]
+    fn inject_plain_text_no_expansion() {
+        let mut cache = EventCache::default();
+        cache.entries.insert(
+            "branch".into(),
+            EventEntry {
+                fired_at: 0,
+                stdout: Some("main".into()),
+                exit_code: 0,
+            },
+        );
+        let mut nums = HashMap::new();
+        let mut strs = HashMap::new();
+        inject_fields(&cache, &mut nums, &mut strs);
+        assert_eq!(strs["event.branch"], "main");
+        // No sub-keys for plain text
+        assert_eq!(strs.len(), 1);
     }
 
     #[test]

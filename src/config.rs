@@ -14,6 +14,7 @@ pub struct StatuslineConfig {
     #[serde(default)]
     pub theme: std::collections::HashMap<String, String>,
     pub budget: Option<BudgetConfig>,
+    pub state: Option<StateConfig>,
     pub logging: Option<LoggingConfig>,
     #[serde(default)]
     pub events: Vec<EventConfig>,
@@ -79,8 +80,21 @@ pub struct BudgetConfig {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct StateConfig {
+    #[serde(default = "default_state_dir")]
+    pub dir: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct LoggingConfig {
-    #[serde(default = "default_log_dir")]
+    #[serde(default = "default_log_file")]
+    pub file: String,
+    pub json: Option<JsonLogConfig>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct JsonLogConfig {
+    #[serde(default = "default_json_log_dir")]
     pub dir: String,
     #[serde(default = "default_keep")]
     pub keep: usize,
@@ -95,7 +109,9 @@ pub struct EventConfig {
     pub capture: bool,
 }
 
-fn default_log_dir() -> String { ".data/logs/statusline".into() }
+fn default_state_dir() -> String { ".data/statusline".into() }
+fn default_log_file() -> String { ".data/statusline/statusline.log".into() }
+fn default_json_log_dir() -> String { ".data/logs/statusline/json".into() }
 fn default_keep() -> usize { 50 }
 fn default_width() -> usize { 10 }
 fn default_filled() -> String { "●".into() }
@@ -104,6 +120,10 @@ fn default_yellow() -> f64 { 60.0 }
 fn default_red() -> f64 { 85.0 }
 
 impl StatuslineConfig {
+    pub fn state_dir(&self) -> &str {
+        self.state.as_ref().map(|s| s.dir.as_str()).unwrap_or(".data/statusline")
+    }
+
     pub fn to_meter_config(&self) -> MeterConfig {
         MeterConfig {
             width: self.meter.width,
